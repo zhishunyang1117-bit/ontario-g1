@@ -12,7 +12,7 @@ const storage = {
   'g1-hist': backup.hist, 'g1-wrong': backup.wrong, 'g1-bookmarks': backup.bookmarks, 'g1-notes': backup.notes,
   'g1-activity': backup.activity, 'g1-sessions': backup.sessions, 'g1-lang': JSON.stringify('both'),
 };
-const PAGES = ['home', 'practice', 'exam', 'wrong', 'bookmarks', 'stats', 'settings'];
+const PAGES = ['home', 'practice', 'exam', 'sprint', 'wrong', 'bookmarks', 'reference', 'search', 'stats', 'settings'];
 
 async function shoot(browser, label, { viewport, theme }) {
   const prefs = { theme, font: 'normal', goal: 20, focus: false };

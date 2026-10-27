@@ -29,9 +29,13 @@
     <button type="button" data-page="home" class="nav-item"><span class="nav-icon" data-icon="home"></span><span>学习总览</span></button>
     <button type="button" data-page="practice" class="nav-item"><span class="nav-icon" data-icon="book"></span><span>分类练习</span><span class="nav-counter">11</span></button>
     <button type="button" data-page="exam" class="nav-item"><span class="nav-icon" data-icon="clipboard"></span><span>模拟考试</span></button>
+    <button type="button" data-page="sprint" class="nav-item"><span class="nav-icon" data-icon="bolt"></span><span>考前冲刺</span></button>
     <p class="nav-label">复习</p>
     <button type="button" data-page="wrong" class="nav-item"><span class="nav-icon" data-icon="history"></span><span>错题复习</span><span class="nav-counter" id="nav-wrong-count" data-count="wrong">0</span></button>
     <button type="button" data-page="bookmarks" class="nav-item"><span class="nav-icon" data-icon="bookmark"></span><span>我的收藏</span><span class="nav-counter" id="nav-bookmark-count" data-count="bookmarks">0</span></button>
+    <p class="nav-label">资料</p>
+    <button type="button" data-page="reference" class="nav-item"><span class="nav-icon" data-icon="note"></span><span>必背速查</span></button>
+    <button type="button" data-page="search" class="nav-item"><span class="nav-icon" data-icon="search"></span><span>题库搜索</span></button>
     <p class="nav-label">记录</p>
     <button type="button" data-page="stats" class="nav-item"><span class="nav-icon" data-icon="chart"></span><span>学习统计</span></button>
     <button type="button" data-page="settings" class="nav-item"><span class="nav-icon" data-icon="gear"></span><span>偏好与数据</span></button>
@@ -46,6 +50,7 @@
     <button class="icon-btn quiz-back" id="quiz-back" type="button" aria-label="保存并退出"><span class="nav-icon" data-icon="chevronLeft"></span><span class="quiz-back-label">退出</span></button>
     <div class="topbar-heading"><h1 id="page-title">学习总览</h1><p id="page-subtitle">一点点积累，让每次出发更从容。</p></div>
     <div class="topbar-controls">
+      <button class="icon-btn" id="search-button" type="button" title="题库搜索" aria-label="题库搜索"><span class="nav-icon" data-icon="search"></span></button>
       <div class="language-switch" role="group" aria-label="题目显示语言"><button type="button" id="lang-both" data-lang="both" aria-pressed="true">中 / EN</button><button type="button" id="lang-zh" data-lang="zh" aria-pressed="false">中文</button><button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button></div>
       <button class="icon-btn" id="font-toggle" type="button" title="切换大字号" aria-label="切换大字号" aria-pressed="false"><span class="nav-icon" data-icon="type"></span></button>
       <button class="icon-btn" id="theme-toggle" type="button" title="切换深浅色" aria-label="切换深浅色"></button>
@@ -59,12 +64,14 @@
   <button type="button" data-page="home" class="tab-item"><span class="tab-icon" data-icon="home"></span><span>总览</span></button>
   <button type="button" data-page="practice" class="tab-item"><span class="tab-icon" data-icon="book"></span><span>练习</span></button>
   <button type="button" data-page="exam" class="tab-item"><span class="tab-icon" data-icon="clipboard"></span><span>考试</span></button>
-  <button type="button" data-page="wrong" class="tab-item"><span class="tab-icon" data-icon="history"></span><span>错题</span><span class="tab-badge" data-count="wrong" data-hide-zero hidden>0</span></button>
+  <button type="button" data-page="reference" class="tab-item"><span class="tab-icon" data-icon="note"></span><span>速查</span></button>
   <button type="button" class="tab-item" id="mobile-menu" aria-label="更多页面" aria-expanded="false" aria-controls="sidebar"><span class="tab-icon" data-icon="more"></span><span>更多</span></button>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="print-sheet" class="print-sheet" aria-hidden="true"></div>
 <script>
 const BANK = /*__DATA__*/;
 const META = /*__META__*/;
+const REF = /*__REF__*/;
 /*__APP__*/
 </script>

@@ -35,6 +35,8 @@
   const cleanBookmarks = value => safeMap(value, v => v ? true : null);
   const cleanNotes = value => safeMap(value, v => typeof v === 'string' ? v.slice(0, 4000) : null);
   const cleanLang = (value, fallback = 'both') => ['both', 'en', 'zh'].includes(value) ? value : fallback;
+  const MODES = ['exam', 'practice', 'wrong', 'bookmarks', 'review', 'sprint'];
+  const cleanPart = p => p && typeof p === 'object' && finiteCount(p.n) > 0 ? { c: Math.min(finiteCount(p.c), finiteCount(p.n)), n: finiteCount(p.n) } : undefined;
   const shuffle = values => { const a = values.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const dateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const ratio = (n, d) => d ? Math.round(n / d * 100) : 0;
@@ -88,6 +90,50 @@
     return `<svg class="ring" viewBox="0 0 ${size} ${size}" aria-hidden="true" focusable="false"><circle class="ring-track" cx="${mid}" cy="${mid}" r="${r}" stroke-width="${stroke}"/>${value > 0 ? `<circle class="ring-fill" cx="${mid}" cy="${mid}" r="${r}" stroke-width="${stroke}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${(c * (1 - Math.min(100, value) / 100)).toFixed(2)}" transform="rotate(-90 ${mid} ${mid})"/>` : ''}</svg>`;
   }
 
+  // 间隔重复：答错的题明天再复习，答对一次复习间隔就升一档（1、2、4、7、15、30 天）。
+  const SRS_STEPS = [1, 2, 4, 7, 15, 30];
+  const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const addDays = (key, n) => { const [y, m, d] = key.split('-').map(Number); const date = new Date(y, m - 1, d, 12); date.setDate(date.getDate() + n); return dateKey(date); };
+  const hashOf = text => [...text].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const cleanSrs = value => safeMap(value, v => v && typeof v === 'object' && DAY_RE.test(v.d) ? { b: Math.min(SRS_STEPS.length - 1, finiteCount(v.b)), d: v.d, l: DAY_RE.test(v.l) ? v.l : null } : null);
+  // 搜索：不分大小写、全角半角，忽略空格；多个关键词用空格隔开，需同时出现。
+  const normalize = text => String(text == null ? '' : text).normalize('NFKC').toLowerCase();
+  const compact = text => normalize(text).replace(/\s+/g, '');
+  const queryTokens = query => normalize(query).split(/\s+/).filter(Boolean);
+  const stripTags = markup => String(markup).replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const matcher = query => { const tokens = queryTokens(query); return tokens.length ? text => { const hay = compact(text); return tokens.every(t => hay.includes(t)); } : null; };
+  function highlight(root, tokens) {
+    if (!root || !tokens.length) return;
+    // 关键词已转成半角：高亮时每个字符同时匹配半角和全角写法，字符之间允许有空格。
+    const escapeChar = ch => ch.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&');
+    const charClass = ch => { const code = ch.charCodeAt(0); return code > 0x20 && code < 0x7f ? `[${escapeChar(ch)}${escapeChar(String.fromCharCode(code + 0xfee0))}]` : escapeChar(ch); };
+    const pattern = new RegExp(tokens.slice().sort((a, b) => b.length - a.length).map(t => [...t].map(charClass).join('\\s*')).join('|'), 'gi');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: node => node.parentElement.closest('mark, .option-key') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const text = node.nodeValue;
+      pattern.lastIndex = 0;
+      if (!pattern.test(text)) return;
+      const fragment = document.createDocumentFragment();
+      let last = 0;
+      text.replace(pattern, (match, offset) => {
+        fragment.append(text.slice(last, offset));
+        const mark = document.createElement('mark'); mark.textContent = match; fragment.append(mark);
+        last = offset + match.length;
+        return match;
+      });
+      fragment.append(text.slice(last));
+      node.replaceWith(fragment);
+    });
+  }
+  function download(filename, text, type) {
+    const blob = new Blob([text], { type: `${type};charset=utf-8` }), url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   // ── 学习记录与界面状态 ───────────────────────────────────────────────
   let lang = cleanLang(storage.get('g1-lang', 'both'));
   let hist = cleanHist(storage.get('g1-hist', {}));
@@ -109,6 +155,12 @@
   // 重绘时保留的界面状态：已展开的回看题、打开着笔记框的题、本次打开页面后加载失败的标志图片。
   const openReviews = new Set(), brokenImages = new Set();
   let notesOpenFor = null;
+  // 第三阶段新增：复习计划、考前冲刺、速查页和题库搜索的状态。
+  const storedSrs = storage.get('g1-srs', null);
+  let srs = storedSrs && typeof storedSrs === 'object' ? cleanSrs(storedSrs) : seedSrs();
+  if (!storedSrs) storage.set('g1-srs', srs);
+  let sprintSection = 'all', sprintCount = 20, sprintUnseen = true;
+  let refDoc = 'cheat', refSearch = '', bankSearch = '', bankSection = 'all', bankPage = 0, bankIndex = null;
 
   // 新用户默认跟随系统深浅色；已保存的偏好不受影响。
   function cleanPrefs(value) {
@@ -134,17 +186,19 @@
     if (!Array.isArray(value)) return [];
     return value.filter(v => v && typeof v === 'object' && Number.isFinite(v.finishedAt) && Number.isFinite(v.total) && Number.isFinite(v.correct)).slice(-100).map(v => ({
       id: String(v.id || '').slice(0, 80),
-      mode: ['exam', 'practice', 'wrong', 'bookmarks'].includes(v.mode) ? v.mode : 'practice',
+      mode: MODES.includes(v.mode) ? v.mode : 'practice',
       total: Math.min(BANK.length, finiteCount(v.total)),
       correct: Math.min(finiteCount(v.correct), finiteCount(v.total)),
       answered: Math.min(finiteCount(v.answered), finiteCount(v.total)),
       duration: finiteCount(v.duration),
       finishedAt: v.finishedAt,
       passed: !!v.passed,
+      signs: v.mode === 'exam' ? cleanPart(v.signs) : undefined,
+      rules: v.mode === 'exam' ? cleanPart(v.rules) : undefined,
     }));
   }
   function validateSession(v) {
-    if (!v || typeof v !== 'object' || !['practice', 'exam', 'wrong', 'bookmarks'].includes(v.mode) || !Array.isArray(v.items) || !v.items.length || v.items.length > BANK.length || v.finished) return null;
+    if (!v || typeof v !== 'object' || !MODES.includes(v.mode) || !Array.isArray(v.items) || !v.items.length || v.items.length > BANK.length || v.finished) return null;
     const unique = new Set();
     const items = v.items.filter(it => it && byId[it.id] && !unique.has(it.id) && unique.add(it.id)).map(it => {
       const q = byId[it.id];
@@ -189,7 +243,38 @@
   function elapsed() { return session ? session.elapsed + (session.startedAt ? Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)) : 0) : 0; }
   function saveSession() { if (!session || session.finished) return; storage.set('g1-session', { ...session, elapsed: elapsed(), startedAt: null }); }
   function pauseSession() { if (session && !session.finished) { session.elapsed = elapsed(); session.startedAt = null; saveSession(); } }
-  function modeName(mode) { return { exam: '模拟考试', practice: '分类练习', wrong: '错题复习', bookmarks: '收藏练习' }[mode] || '练习'; }
+  function modeName(mode) { return { exam: '模拟考试', practice: '分类练习', wrong: '错题复习', bookmarks: '收藏练习', review: '今日复习', sprint: '考前冲刺' }[mode] || '练习'; }
+
+  // ── 复习计划（间隔重复）──────────────────────────────────────────────
+  // 第一次用到复习计划时，按已有成绩生成：错题今天复习，其余练过的题分散到未来一周。
+  function seedSrs() {
+    const today = dateKey(), result = {};
+    Object.keys(hist).forEach(id => {
+      const h = hist[id];
+      if (!h.c && !h.w) return;
+      result[id] = wrong[id] ? { b: 0, d: today, l: null } : { b: isMastered(id) ? Math.min(3, h.c + 1) : 1, d: addDays(today, 1 + hashOf(id) % 7), l: null };
+    });
+    Object.keys(wrong).forEach(id => { if (!result[id]) result[id] = { b: 0, d: today, l: null }; });
+    return result;
+  }
+  function schedule(id, correct) {
+    const today = dateKey(), s = srs[id];
+    if (correct) {
+      if (s && s.l === today) return; // 同一天重复答对不再拉长间隔
+      const b = s ? Math.min(SRS_STEPS.length - 1, s.b + 1) : 2;
+      srs[id] = { b, d: addDays(today, SRS_STEPS[b]), l: today };
+    } else {
+      srs[id] = { b: 0, d: addDays(today, 1), l: today };
+    }
+    storage.set('g1-srs', srs);
+  }
+  function dueIds(day = dateKey()) {
+    return Object.keys(srs).filter(id => srs[id].d <= day).sort((a, b) => srs[a].d.localeCompare(srs[b].d) || srs[a].b - srs[b].b || (wrong[b] || 0) - (wrong[a] || 0));
+  }
+  function forecast(days = 7) {
+    const today = dateKey();
+    return Array.from({ length: days }, (_, i) => { const key = addDays(today, i); return { key, n: Object.values(srs).filter(s => (i === 0 ? s.d <= key : s.d === key)).length }; });
+  }
   function greeting() { const h = new Date().getHours(); return h < 5 ? '夜深了' : h < 11 ? '早上好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好'; }
 
   // ── 外壳：主题、导航、标题 ───────────────────────────────────────────
@@ -240,7 +325,7 @@
     });
   }
   function navigate(next) {
-    if (!['home', 'practice', 'exam', 'wrong', 'bookmarks', 'stats', 'settings'].includes(next)) return;
+    if (!['home', 'practice', 'exam', 'sprint', 'wrong', 'bookmarks', 'reference', 'search', 'stats', 'settings'].includes(next)) return;
     if (page === 'quiz') pauseSession();
     page = next; collectionSearch = ''; collectionGroup = 'all'; collectionPage = 0;
     closeMobile(); openSheet(false); render();
@@ -250,7 +335,7 @@
     const active = document.activeElement;
     const focusId = restoreFocus && active?.id, focusKey = restoreFocus && active?.dataset?.focus;
     const selection = restoreFocus && typeof active?.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null;
-    const navPage = page === 'quiz' || page === 'result' ? ({ exam: 'exam', wrong: 'wrong', bookmarks: 'bookmarks' }[session?.mode] || 'practice') : page;
+    const navPage = page === 'quiz' || page === 'result' ? ({ exam: 'exam', wrong: 'wrong', bookmarks: 'bookmarks', review: 'home', sprint: 'sprint' }[session?.mode] || 'practice') : page;
     document.querySelectorAll('[data-page]').forEach(b => {
       const selected = b.dataset.page === navPage;
       b.classList.toggle('active', selected);
@@ -264,7 +349,7 @@
     }
     document.body.dataset.view = page;
     applyPreferences();
-    ({ home: renderHome, practice: renderPractice, exam: renderExamSetup, quiz: renderQuiz, result: renderResult, wrong: renderCollection, bookmarks: renderCollection, stats: renderStats }[page] || renderSettings)();
+    ({ home: renderHome, practice: renderPractice, exam: renderExamSetup, sprint: renderSprint, quiz: renderQuiz, result: renderResult, wrong: renderCollection, bookmarks: renderCollection, reference: renderReference, search: renderSearch, stats: renderStats }[page] || renderSettings)();
     updateCounts();
     if (restoreFocus) {
       const target = focusId ? document.getElementById(focusId) : focusKey ? view.querySelector(`[data-focus="${focusKey}"]`) : null;
@@ -326,12 +411,30 @@
       ${btn('resume', `<span>继续</span>${icon('arrow')}`, 'primary')}
     </section>`;
   }
+  function forecastBars(days) {
+    const peak = Math.max(1, ...days.map(d => d.n));
+    const weekday = key => { const [y, m, d] = key.split('-').map(Number); return `周${'日一二三四五六'[new Date(y, m - 1, d).getDay()]}`; };
+    return `<div class="review-forecast" role="list" aria-label="未来 7 天每天到期的复习题数">${days.map((d, i) => `<span class="fc-day ${i === 0 ? 'today' : ''}" role="listitem" aria-label="${i === 0 ? '今天（含之前没复习的）' : d.key}：${d.n} 题"><b>${d.n || ''}</b><i class="${d.n ? '' : 'zero'}" style="${d.n ? `height:${Math.max(6, Math.round(d.n / peak * 56))}px` : ''}"></i><em>${i === 0 ? '今天' : i === 1 ? '明天' : weekday(d.key)}</em></span>`).join('')}</div>`;
+  }
+  function reviewCard() {
+    const due = dueIds(), days = forecast(7), tracked = Object.keys(srs).length, later = days.slice(1).reduce((n, d) => n + d.n, 0);
+    const dueWrong = due.filter(id => wrong[id]).length;
+    return `<section class="panel review-card">
+      <div class="section-head"><div><h3>今日复习</h3><p class="section-sub">按遗忘规律安排：答错的明天再见，答对的间隔越拉越长</p></div><span class="chip ${due.length ? 'warn' : 'ok'}">${due.length ? `${due.length} 题到期` : `${icon('check')}今日已清空`}</span></div>
+      <div class="review-body">
+        <p class="review-count"><strong>${due.length}</strong><span>${due.length ? `道题今天该复习${dueWrong ? `，其中 ${dueWrong} 道在错题本里` : ''}` : tracked ? '今天没有到期的题，可以去练新题' : '答过的题会自动排进复习计划'}</span></p>
+        ${forecastBars(days)}
+      </div>
+      <div class="review-footer">${btn('start-review', `${icon('repeat')}<span>${due.length > 20 ? '先复习 20 题' : '开始复习'}</span>`, 'primary', due.length ? '' : 'disabled')}${due.length > 20 ? btn('start-review-all', `全部 ${due.length} 题`, 'ghost') : ''}<span class="review-later">未来 6 天还有 ${later} 题</span></div>
+    </section>`;
+  }
   function modeCard(target, iconName, title, desc, tag, tone) {
     return `<button type="button" class="mode-card ${tone}" data-action="navigate" data-page-target="${target}"><span class="mode-icon">${icon(iconName)}</span><span class="mode-body"><strong>${title}</strong><span>${desc}</span><small>${tag}</small></span>${icon('arrow', 'mode-arrow')}</button>`;
   }
   function renderHome() {
     const t = totals(), today = todayActivity(), goalPct = Math.min(100, ratio(today, prefs.goal)), streak = streakDays();
     const wrongCount = Object.keys(wrong).length, bookmarkCount = Object.keys(bookmarks).length;
+    const sprintLeft = BANK.filter(q => !isMastered(q.id) && sprintRank(q) < 2).length;
     const weak = GROUPS.map(groupStats).filter(g => g.attempts > 0).sort((a, b) => a.accuracy - b.accuracy || b.attempts - a.attempts).slice(0, 3);
     const todayText = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
     setHeader('学习总览', '一点点积累，让每次出发更从容。');
@@ -357,18 +460,21 @@
       <div class="stat-grid">
         ${statCard('book', `${t.seen}<small>/ ${BANK.length}</small>`, '已练题目', `题库覆盖 ${ratio(t.seen, BANK.length)}%`, 'tone-green')}
         ${statCard('target', t.attempts ? `${t.accuracy}<small>%</small>` : '—', '累计正确率', t.attempts ? `共 ${t.attempts} 次作答` : '完成第一题后开始记录', 'tone-blue')}
-        ${statCard('history', wrongCount, '待复习错题', wrongCount ? '复习答对后自动移出' : '目前没有错题', 'tone-amber')}
+        ${statCard('history', wrongCount, '错题本', wrongCount ? '复习答对后自动移出' : '目前没有错题', 'tone-amber')}
         ${statCard('bookmark', bookmarkCount, '收藏题目', bookmarkCount ? '随时回看重点' : '答题时点书签收藏', 'tone-violet')}
       </div>
       <div class="dashboard-grid">
         <div class="main-stack">
+          ${reviewCard()}
           <section class="panel">
             <div class="section-head"><div><h3>选择练习方式</h3><p class="section-sub">循序渐进，稳步前行</p></div></div>
             <div class="mode-grid">
               ${modeCard('practice', 'book', '分类练习', '按章节和难度练，答完立刻看解析。', `${GROUPS.length} 个主题`, 'tone-green')}
               ${modeCard('exam', 'clipboard', '模拟考试', '标志、交规各 20 题，交卷后统一判分。', `${META.exam.signs + META.exam.rules} 道题`, 'tone-blue')}
-              ${modeCard('wrong', 'history', '错题巩固', '把每次答错变成下一次答对。', wrongCount ? `${wrongCount} 道待复习` : '暂无错题', 'tone-amber')}
-              ${modeCard('bookmarks', 'bookmark', '我的收藏', '回看重要规则，让常忘的点更牢靠。', bookmarkCount ? `${bookmarkCount} 道收藏` : '还没有收藏', 'tone-violet')}
+              ${modeCard('sprint', 'bolt', '考前冲刺', '只练错题和没掌握的题，补齐短板。', sprintLeft ? `${sprintLeft} 道易错题待巩固` : '先练一些题，再来冲刺', 'tone-amber')}
+              ${modeCard('wrong', 'history', '错题巩固', '把每次答错变成下一次答对。', wrongCount ? `${wrongCount} 道待复习` : '暂无错题', 'tone-violet')}
+              ${modeCard('bookmarks', 'bookmark', '我的收藏', '回看重要规则，让常忘的点更牢靠。', bookmarkCount ? `${bookmarkCount} 道收藏` : '还没有收藏', 'tone-green')}
+              ${modeCard('reference', 'note', '必背速查', '关键数字、扣分、标志和考试须知，可搜索。', '考前翻一翻', 'tone-blue')}
             </div>
           </section>
           <section class="panel">
@@ -449,7 +555,7 @@
   function renderExamSetup() {
     setHeader('模拟考试', '专注作答，交卷后再看对错和解析。');
     const need = section => Math.ceil(META.exam[section] * META.exam.pass_ratio);
-    const exams = sessions.filter(s => s.mode === 'exam').slice(-3).reverse();
+    const exams = sessions.filter(s => s.mode === 'exam');
     view.innerHTML = `
       <section class="panel exam-intro">
         <div class="exam-emblem">${icon('clipboard')}</div>
@@ -466,7 +572,84 @@
         </div>
         <div class="exam-note"><strong>关于模拟标准</strong><p>${esc(META.exam.note)}</p></div>
       </section>
-      ${exams.length ? `<section class="panel"><div class="section-head"><h3>最近的模拟成绩</h3>${btn('navigate', '全部记录', 'ghost small', 'data-page-target="stats"')}</div><div class="history-list">${exams.map(historyRow).join('')}</div></section>` : ''}`;
+      ${examHistoryPanel(exams)}`;
+  }
+
+  // 模拟考试成绩趋势：单一折线（总正确率）+ 80% 及格线；圆点实心为通过、空心为未通过，悬停或键盘聚焦显示两部分得分。
+  const partText = p => p ? `${p.c} / ${p.n}` : '—';
+  const shortDate = t => new Date(t).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+  function trendChart(exams) {
+    const list = exams.slice(-20), n = list.length, pass = META.exam.pass_ratio * 100;
+    const x = i => n === 1 ? 50 : 3 + i / (n - 1) * 94, pct = s => ratio(s.correct, s.total);
+    return `<figure class="chart trend-chart">
+      <div class="trend-plot">
+        <div class="chart-gridlines" aria-hidden="true">${[100, 60, 40, 20, 0].map(v => `<span style="bottom:${v}%"><em>${v}</em></span>`).join('')}</div>
+        <div class="trend-pass" style="bottom:${pass}%" aria-hidden="true"><em>及格 ${pass}%</em></div>
+        <svg class="trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><polyline points="${list.map((s, i) => `${x(i).toFixed(2)},${100 - pct(s)}`).join(' ')}"/></svg>
+        <div class="trend-points" role="list" aria-label="最近 ${n} 次模拟考试的正确率">${list.map((s, i) => `<span class="trend-point ${s.passed ? 'pass' : 'fail'} ${x(i) < 18 ? 'edge-left' : x(i) > 82 ? 'edge-right' : ''}" role="listitem" tabindex="0" style="left:${x(i)}%;bottom:${pct(s)}%" aria-label="${esc(shortDate(s.finishedAt))}：正确率 ${pct(s)}%，${s.passed ? '通过' : '未通过'}${s.signs ? `，标志 ${s.signs.c}/${s.signs.n}，交规 ${s.rules.c}/${s.rules.n}` : ''}"><span class="chart-tip" aria-hidden="true"><b>${pct(s)}% · ${s.passed ? '通过' : '未通过'}</b>${esc(shortDate(s.finishedAt))}${s.signs ? ` · 标志 ${partText(s.signs)} · 交规 ${partText(s.rules)}` : ''}</span></span>`).join('')}</div>
+      </div>
+      <div class="trend-axis" aria-hidden="true"><span>${esc(shortDate(list[0].finishedAt))}</span>${n > 1 ? `<span>${esc(shortDate(list[n - 1].finishedAt))}</span>` : ''}</div>
+      <figcaption class="trend-legend"><span><i class="trend-key pass"></i>通过</span><span><i class="trend-key fail"></i>未通过</span><span><i class="trend-key line"></i>及格线 ${pass}%</span><span class="trend-note">最近 ${n} 次</span></figcaption>
+    </figure>`;
+  }
+  function examHistoryPanel(list) {
+    if (!list.length) return '';
+    const exams = list.slice().sort((a, b) => a.finishedAt - b.finishedAt);
+    const pcts = exams.map(s => ratio(s.correct, s.total)), recent = pcts.slice(-5), passed = exams.filter(s => s.passed).length;
+    return `<section class="panel exam-history">
+      <div class="section-head"><div><h3>模拟考试成绩</h3><p class="section-sub">每部分都达到 80% 才算通过；交卷后的成绩都会记在这里</p></div></div>
+      <div class="exam-kpis">
+        <div><strong>${exams.length}</strong><span>已考次数</span></div>
+        <div><strong>${passed}</strong><span>通过次数</span></div>
+        <div><strong>${Math.max(...pcts)}%</strong><span>最高正确率</span></div>
+        <div><strong>${Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)}%</strong><span>最近 ${recent.length} 次平均</span></div>
+      </div>
+      ${trendChart(exams)}
+      <details class="chart-table"><summary>查看全部成绩</summary><div class="table-scroll"><table><thead><tr><th scope="col">交卷时间</th><th scope="col">正确率</th><th scope="col">道路标志</th><th scope="col">交通规则</th><th scope="col">结果</th><th scope="col">用时</th></tr></thead><tbody>${exams.slice().reverse().map(s => `<tr><td>${esc(new Date(s.finishedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</td><td>${ratio(s.correct, s.total)}%</td><td>${partText(s.signs)}</td><td>${partText(s.rules)}</td><td>${s.passed ? '通过' : '未通过'}</td><td>${timeLabel(s.duration)}</td></tr>`).join('')}</tbody></table></div><p class="footnote">更新前交卷的考试没有记录两部分的分数，显示为“—”。</p></details>
+    </section>`;
+  }
+
+  // ── 考前冲刺 ─────────────────────────────────────────────────────────
+  // 冲刺题池：已掌握的题不出；先出错题本里的题，再出练过但没掌握的题，最后是没练过的题（挑战难度优先）。
+  function sprintRank(q) {
+    const h = hist[q.id];
+    if (wrong[q.id]) return 0;
+    if (h && h.c + h.w) return 1;
+    return q.difficulty === 'hard' ? 2 : 3;
+  }
+  function sprintPool(section = sprintSection, includeUnseen = sprintUnseen) {
+    return shuffle(BANK.filter(q => (section === 'all' || q.section === section) && !isMastered(q.id) && (includeUnseen || sprintRank(q) < 2)))
+      .map(q => ({ q, rank: sprintRank(q), weight: (wrong[q.id] || 0) * 10 + (hist[q.id]?.w || 0) - (hist[q.id]?.c || 0) }))
+      .sort((a, b) => a.rank - b.rank || b.weight - a.weight)
+      .map(x => x.q);
+  }
+  function renderSprint() {
+    setHeader('考前冲刺', '只练易错和还没掌握的题，把短板补上。');
+    const scope = BANK.filter(q => sprintSection === 'all' || q.section === sprintSection);
+    const counts = [0, 0, 0, 0];
+    scope.forEach(q => { if (!isMastered(q.id)) counts[sprintRank(q)]++; });
+    const mastered = scope.filter(q => isMastered(q.id)).length, pool = sprintPool();
+    const planned = sprintCount === 'all' ? pool.length : Math.min(sprintCount, pool.length);
+    const tile = (n, label, desc, tone) => `<div class="sprint-tile ${tone}"><strong>${n}</strong><span>${label}</span><small>${desc}</small></div>`;
+    view.innerHTML = `
+      <div class="page-intro"><div><h2>考前冲刺，把会错的题先练熟。</h2><p>已经掌握的题不再出现。错题优先，其次是练过但还没掌握的题，最后才是没练过的题。</p></div></div>
+      <section class="panel sprint-panel">
+        <div class="sprint-tiles">
+          ${tile(counts[0], '错题本里的题', '最先出现', 'tone-red')}
+          ${tile(counts[1], '练过但没掌握', '答错次数不少于答对', 'tone-amber')}
+          ${tile(counts[2] + counts[3], '还没练过', `其中挑战难度 ${counts[2]} 道`, 'tone-blue')}
+          ${tile(mastered, '已掌握', '冲刺时跳过', 'tone-green')}
+        </div>
+        <div class="option-rows">
+          <div class="field-row"><span class="field-label">冲刺范围</span>${segmented('sprint-section', '冲刺范围', [['all', '全部'], ['rules', '交通规则'], ['signs', '道路标志']], sprintSection)}</div>
+          <div class="field-row"><span class="field-label">题目数量</span>${segmented('sprint-count', '冲刺题目数量', [[20, '20 题'], [40, '40 题'], ['all', '全部']], sprintCount)}</div>
+          <label class="toggle-row" for="sprint-unseen"><span class="toggle-copy"><strong>加入还没练过的题</strong><small>关掉后只练错题和练过没掌握的题</small></span><span class="switch"><input type="checkbox" id="sprint-unseen" ${sprintUnseen ? 'checked' : ''}><span aria-hidden="true"></span></span></label>
+        </div>
+        <div class="setup-footer">
+          <p><strong>本次冲刺 ${planned} 题</strong><span>${pool.length ? `题池共 ${pool.length} 道 · 答对后移出错题本` : '这个范围里的题都掌握了'}</span></p>
+          ${btn('start-sprint', `${icon('bolt')}<span>开始冲刺</span>`, 'primary large', planned ? '' : 'disabled')}
+        </div>
+      </section>`;
   }
 
   // ── 开始与作答 ───────────────────────────────────────────────────────
@@ -498,6 +681,12 @@
     let candidates = shuffle(BANK.filter(q => !isMastered(q.id)));
     if (candidates.length < 20) candidates = [...candidates, ...shuffle(BANK.filter(q => isMastered(q.id)))];
     beginSession(candidates.slice(0, 20).map(q => q.id), 'practice');
+  }
+  function startReview(all = false) { const ids = dueIds(); beginSession(all ? ids : ids.slice(0, 20), 'review'); }
+  function startSprint() {
+    let ids = sprintPool().map(q => q.id);
+    if (sprintCount !== 'all') ids = ids.slice(0, sprintCount);
+    beginSession(shuffle(ids), 'sprint');
   }
   function startSmart(group = null) {
     const pool = BANK.filter(q => !group || q.group === group);
@@ -606,7 +795,9 @@
     if (item.recorded || item.pick === null) return;
     const q = byId[item.id], correct = item.pick === q.answer_index, h = hist[q.id] || { c: 0, w: 0 };
     h[correct ? 'c' : 'w']++; hist[q.id] = h;
-    if (!correct) wrong[q.id] = (wrong[q.id] || 0) + 1; else if (session.mode === 'wrong') delete wrong[q.id];
+    // 错题复习、今日复习和考前冲刺里答对，错题移出错题本；其他模式只记成绩。
+    if (!correct) wrong[q.id] = (wrong[q.id] || 0) + 1; else if (['wrong', 'review', 'sprint'].includes(session.mode)) delete wrong[q.id];
+    schedule(q.id, correct);
     const a = activity[dateKey()] || { c: 0, w: 0 };
     a[correct ? 'c' : 'w']++; activity[dateKey()] = a; item.recorded = true;
     storage.set('g1-hist', hist); storage.set('g1-wrong', wrong); storage.set('g1-activity', activity);
@@ -640,8 +831,10 @@
     if (session.mode === 'exam') session.items.forEach(record);
     session.finished = true; session.finishedAt = Date.now();
     const correct = session.items.filter(it => it.pick === byId[it.id].answer_index).length, answered = session.items.filter(it => it.pick !== null).length;
-    const passed = session.mode === 'exam' && examParts(session).every(p => p.pass);
-    sessions.push({ id: session.id, mode: session.mode, total: session.items.length, correct, answered, duration: session.elapsed, finishedAt: session.finishedAt, passed });
+    const parts = examParts(session), passed = session.mode === 'exam' && parts.every(p => p.pass);
+    const entry = { id: session.id, mode: session.mode, total: session.items.length, correct, answered, duration: session.elapsed, finishedAt: session.finishedAt, passed };
+    if (session.mode === 'exam') { entry.signs = { c: parts[0].c, n: parts[0].n }; entry.rules = { c: parts[1].c, n: parts[1].n }; }
+    sessions.push(entry);
     sessions = sessions.slice(-100);
     storage.set('g1-sessions', sessions); storage.set('g1-session', null);
     page = 'result'; reviewPage = 0; openReviews.clear(); render();
@@ -726,7 +919,7 @@
           <label class="search-field" for="collection-search">${icon('search')}<input id="collection-search" type="search" placeholder="搜索题目、关键词或题号" value="${esc(collectionSearch)}" autocomplete="off"></label>
           <label class="select-field" for="collection-group"><span class="sr-only">按章节筛选</span><select id="collection-group"><option value="all">全部章节</option>${GROUPS.map(g => `<option value="${g.id}" ${collectionGroup === g.id ? 'selected' : ''}>${esc(shortName(g.id))}</option>`).join('')}</select></label>
         </div>
-        <div class="list-head"><span>${ids.length} 道符合条件</span><span>每页 12 道</span></div>
+        <div class="list-head"><span>${ids.length} 道符合条件</span><div class="row export-row">${btn('export-md', `${icon('download')}<span>导出 Markdown</span>`, 'ghost small', ids.length ? '' : 'disabled')}${btn('export-csv', `${icon('download')}<span>导出 CSV</span>`, 'ghost small', ids.length ? '' : 'disabled')}${btn('print-answers', `${icon('note')}<span>打印（含答案）</span>`, 'ghost small', ids.length ? '' : 'disabled')}${btn('print-blank', `${icon('note')}<span>打印练习卷</span>`, 'ghost small', ids.length ? '' : 'disabled')}</div></div>
         <div class="review-list">${ids.length ? ids.slice(collectionPage * 12, collectionPage * 12 + 12).map(id => {
           const q = byId[id], h = hist[id] || { c: 0, w: 0 };
           return `<article class="review-row">
@@ -747,6 +940,152 @@
         <p>${isWrong ? '继续练习，答错的题会自动收进这里。' : '答题时点右上角的书签图标，就能把重要的题放在这里。'}</p>
         ${btn('navigate', '去分类练习', 'primary', 'data-page-target="practice"')}
       </section>`}`;
+  }
+
+  // ── 必背速查 ─────────────────────────────────────────────────────────
+  // 内容来自 data/cheat.json、data/info.json，由 build.py 解析成块结构内嵌（REF）。块里的 HTML 已在生成时转义。
+  function filterItems(items, test) {
+    return items.flatMap(it => {
+      if (test(stripTags(it.html))) return [it];
+      const children = (it.children || []).map(c => ({ ...c, items: filterItems(c.items, test) })).filter(c => c.items.length);
+      return children.length ? [{ ...it, children }] : [];
+    });
+  }
+  // 搜索时只留下命中的段落、表格行和列表条目；命中小标题时带出它下面的全部内容，命中内容也会带上所属小标题。
+  function filterBlocks(blocks, test) {
+    const keep = new Set(), result = blocks.slice();
+    let hits = 0, h3 = -1, h4 = -1, open = 0;
+    blocks.forEach((b, i) => {
+      if (b.t === 'h3' || b.t === 'h4') {
+        const level = b.t === 'h3' ? 3 : 4;
+        if (level === 3) { h3 = i; h4 = -1; } else h4 = i;
+        if (open && level > open) { keep.add(i); return; }
+        open = test(stripTags(b.html)) ? level : 0;
+        if (open) { keep.add(i); hits++; if (level === 4 && h3 >= 0) keep.add(h3); }
+        return;
+      }
+      if (open) { keep.add(i); return; }
+      let kept = null;
+      if (b.t === 'table') {
+        const rows = test(b.head.map(stripTags).join(' ')) ? b.rows : b.rows.filter(r => test(r.map(stripTags).join(' ')));
+        if (rows.length) { kept = { ...b, rows }; hits += rows.length; }
+      } else if (b.t === 'ul' || b.t === 'ol') {
+        const items = filterItems(b.items, test);
+        if (items.length) { kept = { ...b, items }; hits += items.length; }
+      } else if (b.t !== 'links' && test(stripTags(b.html))) { kept = b; hits++; }
+      if (kept) { result[i] = kept; keep.add(i); if (h3 >= 0) keep.add(h3); if (h4 >= 0) keep.add(h4); }
+    });
+    return { blocks: result.filter((_, i) => keep.has(i)), hits };
+  }
+  function refList(b) {
+    const tag = b.t === 'ol' ? 'ol' : 'ul';
+    return `<${tag} class="ref-list">${b.items.map(it => `<li>${it.html}${(it.children || []).map(refList).join('')}</li>`).join('')}</${tag}>`;
+  }
+  function refBlock(b) {
+    if (b.t === 'h3') return `<h3 class="ref-h3">${b.html}</h3>`;
+    if (b.t === 'h4') return `<h4 class="ref-h4">${b.html}</h4>`;
+    if (b.t === 'ul' || b.t === 'ol') return refList(b);
+    if (b.t === 'quote') return `<blockquote class="ref-quote">${b.html}</blockquote>`;
+    if (b.t === 'links') return `<p class="ref-links">${icon('book')}<span>${b.html}</span></p>`;
+    if (b.t === 'table') {
+      const labels = b.head.map(stripTags);
+      return `<div class="ref-table cols-${b.head.length}"><table><thead><tr>${b.head.map(c => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr>${r.map((c, i) => i ? `<td data-label="${esc(labels[i])}">${c}</td>` : `<th scope="row">${c}</th>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    return `<p>${b.html}</p>`;
+  }
+  function refResults(doc, test) {
+    return doc.sections.map((s, i) => {
+      if (!test) return { s, i, blocks: s.blocks, hits: 0 };
+      if (test(s.title)) return { s, i, blocks: s.blocks, hits: 1 };
+      const r = filterBlocks(s.blocks, test);
+      return { s, i, blocks: r.blocks, hits: r.hits };
+    }).filter(x => !test || x.hits);
+  }
+  function renderReference() {
+    setHeader('必背速查', '考前快速翻看：关键数字、扣分、标志和考试须知。');
+    const test = matcher(refSearch), docs = REF.docs || [];
+    const doc = docs.find(d => d.id === refDoc) || docs[0];
+    if (!doc) { view.innerHTML = `<section class="panel empty-state">${icon('note')}<h3>没有速查资料</h3></section>`; return; }
+    const results = refResults(doc, test), hits = results.reduce((n, x) => n + x.hits, 0);
+    const others = test ? docs.filter(d => d !== doc).map(d => ({ d, hits: refResults(d, test).reduce((n, x) => n + x.hits, 0) })).filter(o => o.hits) : [];
+    const shortTitle = d => d.id === 'cheat' ? '必背要点' : d.id === 'info' ? '考试须知' : d.title;
+    view.innerHTML = `
+      <section class="panel ref-toolbar">
+        <div class="toolbar">
+          ${segmented('ref-doc', '速查资料', docs.map(d => [d.id, shortTitle(d)]), doc.id)}
+          <label class="search-field" for="ref-search">${icon('search')}<input id="ref-search" type="search" placeholder="搜规则、数字或英文，如：扣分、30 m、school bus" value="${esc(refSearch)}" autocomplete="off"></label>
+          ${btn('print-page', `${icon('note')}<span>打印</span>`, 'ghost print-button')}
+        </div>
+        ${test ? `<p class="ref-summary" role="status">${hits ? `在「${shortTitle(doc)}」找到 ${hits} 处` : `「${shortTitle(doc)}」里没有找到`}${others.map(o => `；「${shortTitle(o.d)}」有 ${o.hits} 处 <button type="button" class="link-button" data-action="ref-doc" data-value="${o.d.id}">去看看</button>`).join('')}</p>` : `<p class="ref-summary">${esc(doc.title)}</p>`}
+      </section>
+      <div class="ref-layout">
+        ${results.length ? `<nav class="ref-toc" aria-label="章节目录">${results.map(x => `<a href="#ref-${doc.id}-${x.i}" data-action="ref-jump" data-target="ref-${doc.id}-${x.i}">${esc(x.s.title)}${test ? `<small>${x.hits}</small>` : ''}</a>`).join('')}</nav>` : ''}
+        <div class="ref-content">
+          ${!test && doc.intro.length ? `<section class="panel ref-intro">${doc.intro.map(refBlock).join('')}</section>` : ''}
+          ${results.length ? results.map(x => `<section class="panel ref-section" id="ref-${doc.id}-${x.i}"><h2>${esc(x.s.title)}</h2>${x.blocks.map(refBlock).join('')}</section>`).join('') : `<section class="panel empty-state">${icon('search')}<h3>没有找到相关内容</h3><p>换个说法试试，比如“酒驾”“扣分”“stop sign”；也可以去题库搜索里找相关题目。</p>${btn('bank-from-ref', '在题库里搜索', 'ghost')}</section>`}
+        </div>
+      </div>`;
+    highlight(view.querySelector('.ref-content'), queryTokens(refSearch));
+  }
+
+  // ── 题库搜索 ─────────────────────────────────────────────────────────
+  const FIELD_NAMES = { question: '题干', options: '选项', explanation: '解析', sign: '标志描述', meta: '章节 / 题号' };
+  function searchIndex() {
+    if (!bankIndex) {
+      bankIndex = BANK.map(q => {
+        const fields = {
+          question: `${q.question_zh} ${q.question_en}`,
+          options: q.options.map(o => `${o.zh} ${o.en}`).join(' '),
+          explanation: `${q.explanation_zh} ${q.explanation_en}`,
+          sign: `${q.sign_desc_zh || ''} ${q.sign_desc_en || ''}`,
+          meta: `${q.id} ${q.topic_zh} ${shortName(q.group)} ${q.source_title || ''}`,
+        };
+        const packed = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, compact(v)]));
+        return { q, fields: packed, all: Object.values(packed).join('|') };
+      });
+    }
+    return bankIndex;
+  }
+  function bankResults() {
+    const tokens = queryTokens(bankSearch);
+    if (!tokens.length) return [];
+    return searchIndex()
+      .filter(e => (bankSection === 'all' || e.q.section === bankSection) && tokens.every(t => e.all.includes(t)))
+      .map(e => ({ q: e.q, where: Object.keys(FIELD_NAMES).filter(k => tokens.some(t => e.fields[k].includes(t))) }))
+      .sort((a, b) => (b.where[0] === 'question') - (a.where[0] === 'question'));
+  }
+  function renderSearch() {
+    setHeader('题库搜索', '题干、选项、解析都能搜，中英文都可以。');
+    const results = bankResults(), pages = Math.ceil(results.length / 20);
+    bankPage = Math.min(bankPage, Math.max(0, pages - 1));
+    const examples = ['校车', '扣分', '黄灯', 'roundabout', 'school bus', '30 km/h', '施工区', '酒驾'];
+    view.innerHTML = `
+      <section class="panel search-panel">
+        <div class="toolbar">
+          <label class="search-field large" for="bank-search">${icon('search')}<input id="bank-search" type="search" placeholder="输入关键词，多个词用空格隔开" value="${esc(bankSearch)}" autocomplete="off"></label>
+          ${segmented('bank-section', '搜索范围', [['all', '全部'], ['rules', '交通规则'], ['signs', '道路标志']], bankSection)}
+        </div>
+        <div class="search-tips"><span>试试：</span>${examples.map(t => `<button type="button" class="search-chip" data-action="search-example" data-value="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      </section>
+      ${bankSearch.trim() ? `<section class="panel search-results-panel">
+        <div class="list-head" role="status"><span>${results.length ? `找到 ${results.length} 道题` : '没有找到相关题目'}</span>${pages > 1 ? `<span>每页 20 道</span>` : ''}</div>
+        ${results.length ? `<div class="search-results">${results.slice(bankPage * 20, bankPage * 20 + 20).map(({ q, where }) => {
+          const deep = !where.includes('question');
+          return `<article class="search-result">
+            <div class="question-meta"><span class="chip ${q.section}">${esc(shortName(q.group))}</span><span>${esc(q.id)}</span>${q.difficulty ? `<span class="difficulty ${esc(q.difficulty)}">${difficultyNames[q.difficulty] || ''}</span>` : ''}<span class="match-where">匹配：${where.map(k => FIELD_NAMES[k]).join('、')}</span></div>
+            <div class="search-stem">${textPair(q.question_zh, q.question_en)}</div>
+            <details class="search-answer" ${deep ? 'open' : ''}><summary>${icon('chevron', 'review-chevron')}<span>选项、答案与解析</span></summary>
+              <ol class="search-options">${q.options.map((o, i) => `<li class="${i === q.answer_index ? 'is-answer' : ''}"><span class="option-key">${KEYS[i]}</span><span class="option-copy">${textPair(o.zh, o.en)}</span>${i === q.answer_index ? `<span class="answer-tag">${icon('check')}正确答案</span>` : ''}</li>`).join('')}</ol>
+              <div class="explanation">${textPair(q.explanation_zh, q.explanation_en)}</div>
+              ${q.sign_desc_zh || q.sign_desc_en ? `<p class="sign-note">标志：${textPair(q.sign_desc_zh, q.sign_desc_en)}</p>` : ''}
+              <a class="source-link" href="${esc(q.source_url)}" target="_blank" rel="noopener noreferrer">${icon('book')}<span>${esc(q.source_title || '官方手册依据')}</span>${icon('external')}</a>
+            </details>
+            <div class="review-actions">${btn('practice-one', '练这道题', 'secondary small', `data-id="${q.id}"`)}<button class="icon-btn bordered ${bookmarks[q.id] ? 'active' : ''}" type="button" data-action="bookmark-id" data-id="${q.id}" aria-label="收藏" aria-pressed="${!!bookmarks[q.id]}">${icon('bookmark')}</button></div>
+          </article>`;
+        }).join('')}</div>` : `<div class="empty-state">${icon('search')}<h3>换个关键词试试</h3><p>可以用中文或英文，多个词之间加空格；也可以去必背速查里找规则原文。</p>${btn('ref-from-bank', '去必背速查', 'ghost')}</div>`}
+        ${pages > 1 ? `<div class="pagination">${btn('bank-prev', '上一页', 'ghost small', bankPage === 0 ? 'disabled' : '')}<span>${bankPage + 1} / ${pages}</span>${btn('bank-next', '下一页', 'ghost small', bankPage === pages - 1 ? 'disabled' : '')}</div>` : ''}
+      </section>` : `<section class="panel empty-state search-empty"><span class="empty-illustration">${icon('search')}</span><h3>在 ${BANK.length} 道题里找答案</h3><p>输入关键词，题干、选项、解析和标志描述里出现的都会找出来。</p></section>`}`;
+    highlight(view.querySelector('.search-results'), queryTokens(bankSearch));
   }
 
   // ── 学习统计 ─────────────────────────────────────────────────────────
@@ -777,7 +1116,23 @@
   }
   function historyRow(s) {
     const exam = s.mode === 'exam';
-    return `<div class="history-row"><span class="history-icon ${exam ? 'exam' : ''}">${icon(exam ? 'clipboard' : s.mode === 'wrong' ? 'history' : s.mode === 'bookmarks' ? 'bookmark' : 'book')}</span><span class="history-copy"><strong>${modeName(s.mode)}${exam ? ` <span class="chip ${s.passed ? 'ok' : 'warn'}">${s.passed ? '通过' : '未通过'}</span>` : ''}</strong><small>${esc(new Date(s.finishedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))} · 用时 ${timeLabel(s.duration)}</small></span><span class="history-score"><strong>${s.correct} / ${s.total}</strong><small>${ratio(s.correct, s.total)}%</small></span></div>`;
+    return `<div class="history-row"><span class="history-icon ${exam ? 'exam' : ''}">${icon({ exam: 'clipboard', wrong: 'history', bookmarks: 'bookmark', review: 'repeat', sprint: 'bolt' }[s.mode] || 'book')}</span><span class="history-copy"><strong>${modeName(s.mode)}${exam ? ` <span class="chip ${s.passed ? 'ok' : 'warn'}">${s.passed ? '通过' : '未通过'}</span>` : ''}</strong><small>${esc(new Date(s.finishedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))} · 用时 ${timeLabel(s.duration)}</small></span><span class="history-score"><strong>${s.correct} / ${s.total}</strong><small>${ratio(s.correct, s.total)}%</small></span></div>`;
+  }
+  function reviewPlanPanel() {
+    const tracked = Object.values(srs);
+    if (!tracked.length) return '';
+    const strength = [tracked.filter(s => s.b <= 1).length, tracked.filter(s => s.b >= 2 && s.b <= 3).length, tracked.filter(s => s.b >= 4).length];
+    return `<section class="panel review-plan">
+      <div class="section-head"><div><h3>复习计划</h3><p class="section-sub">${tracked.length} 道练过的题按遗忘规律排期；记得越牢，下次复习隔得越久</p></div>${btn('start-review', `${icon('repeat')}<span>复习到期的题</span>`, 'secondary small', dueIds().length ? '' : 'disabled')}</div>
+      <div class="plan-grid">
+        <div class="plan-strength">
+          <div class="plan-row"><span>刚学 / 易忘</span><strong>${strength[0]}</strong><small>1–2 天内再复习</small></div>
+          <div class="plan-row"><span>巩固中</span><strong>${strength[1]}</strong><small>4–7 天后复习</small></div>
+          <div class="plan-row"><span>记得牢</span><strong>${strength[2]}</strong><small>半个月以上再复习</small></div>
+        </div>
+        <div class="plan-forecast">${forecastBars(forecast(7))}</div>
+      </div>
+    </section>`;
   }
   function renderStats() {
     const t = totals(), exams = sessions.filter(s => s.mode === 'exam'), pass = exams.filter(s => s.passed).length;
@@ -813,9 +1168,11 @@
           </button>`;
         }).join('')}</div>
       </section>
+      ${reviewPlanPanel()}
+      ${examHistoryPanel(exams)}
       <section class="panel">
         <div class="section-head"><div><h3>最近完成的练习</h3><p class="section-sub">最近 12 次</p></div></div>
-        ${sessions.length ? `<div class="history-list">${sessions.slice(-12).reverse().map(historyRow).join('')}</div>` : `<div class="empty-state compact">${icon('clock')}<p>完成一次练习后，会在这里留下记录。</p>${btn('quick', '开始第一组练习', 'secondary')}</div>`}
+        ${sessions.length ? `<div class="history-list">${sessions.slice().sort((a, b) => a.finishedAt - b.finishedAt).slice(-12).reverse().map(historyRow).join('')}</div>` : `<div class="empty-state compact">${icon('clock')}<p>完成一次练习后，会在这里留下记录。</p>${btn('quick', '开始第一组练习', 'secondary')}</div>`}
       </section>`;
   }
 
@@ -880,14 +1237,68 @@
       overlay.querySelector('[data-modal-cancel]').focus();
     });
   }
+  // 错题本 / 收藏导出：选项按题库原始顺序（A–D），附答案、解析、答错次数和个人笔记。导出当前筛选结果。
+  function collectionTitle() { return page === 'wrong' ? '错题本' : '我的收藏'; }
+  function questionsMarkdown(ids) {
+    const lines = [`# G1 ${collectionTitle()}（${dateKey()} 导出，共 ${ids.length} 题）`, '', '> 来自 G1 Studio。选项按题库原始顺序排列；标志图片引用官方网址，需要联网显示。', ''];
+    ids.forEach((id, n) => {
+      const q = byId[id], answer = q.options[q.answer_index];
+      lines.push(`## ${n + 1}. ${q.id}　〔${shortName(q.group)}〕`, '');
+      if (q.image_url) lines.push(`![${q.sign_desc_zh || '交通标志'}](${q.image_url})`, '', `（图示：${q.sign_desc_zh || q.sign_desc_en}）`, '');
+      lines.push(`**${q.question_zh}**  `, `*${q.question_en}*`, '');
+      q.options.forEach((o, i) => lines.push(`- ${KEYS[i]}. ${o.zh} ／ ${o.en}${i === q.answer_index ? ' ✅' : ''}`));
+      lines.push('', `**答案：${KEYS[q.answer_index]}**　${answer.zh}（${answer.en}）  `, `**解析：** ${q.explanation_zh}  `, `*${q.explanation_en}*  `);
+      if (page === 'wrong' && wrong[id]) lines.push(`累计答错 ${wrong[id]} 次  `);
+      if (notes[id]) lines.push(`**我的笔记：** ${notes[id].replace(/\s*\n\s*/g, ' ')}  `);
+      lines.push(`依据：[${q.source_title || '官方手册'}](${q.source_url})`, '', '---', '');
+    });
+    return lines.join('\n');
+  }
+  function questionsCsv(ids) {
+    const cell = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const rows = [['题号', '章节', '部分', '题目(中)', '题目(EN)', 'A', 'B', 'C', 'D', '答案', '解析', '答错次数', '我的笔记', '图片', '依据']];
+    ids.forEach(id => {
+      const q = byId[id];
+      rows.push([q.id, shortName(q.group), sectionNames[q.section], q.question_zh, q.question_en, ...q.options.map(o => `${o.zh} / ${o.en}`), KEYS[q.answer_index], q.explanation_zh, wrong[id] || 0, notes[id] || '', q.image_url || '', q.source_url]);
+    });
+    return '\ufeff' + rows.map(r => r.map(cell).join(',')).join('\r\n') + '\r\n';
+  }
+  function exportQuestions(format) {
+    const ids = collectionIds();
+    if (!ids.length) return;
+    const name = `G1-${collectionTitle()}-${dateKey()}`;
+    if (format === 'md') download(`${name}.md`, questionsMarkdown(ids), 'text/markdown');
+    else download(`${name}.csv`, questionsCsv(ids), 'text/csv');
+    toast(`已导出 ${ids.length} 道题。`);
+  }
+  // 打印：把题目排进专用的打印区域再调用浏览器打印；练习卷不带答案，答案统一附在最后。
+  // 有标志图片时先等图片加载完（失败的去掉，最多等 5 秒）再打开打印窗口，否则打印出来的图是空白。
+  let printPending = false;
+  function printQuestions(withAnswers) {
+    const ids = collectionIds(), sheet = $('#print-sheet');
+    if (!ids.length || !sheet || printPending) return;
+    sheet.innerHTML = `<header class="print-head"><h1>G1 ${collectionTitle()}${withAnswers ? '' : ' · 练习卷'}</h1><p>${dateKey()} · 共 ${ids.length} 题 · G1 Studio</p></header>${ids.map((id, n) => {
+      const q = byId[id];
+      return `<article class="print-q"><h2><span>${n + 1}.</span> ${esc(q.question_zh)}</h2><p class="print-en">${esc(q.question_en)}</p>${q.image_url ? `<p class="print-sign">${brokenImages.has(q.image_url) ? '' : `<img src="${esc(q.image_url)}" alt="">`}（图示：${esc(q.sign_desc_zh || q.sign_desc_en)}）</p>` : ''}<ol class="print-options">${q.options.map((o, i) => `<li class="${withAnswers && i === q.answer_index ? 'is-answer' : ''}"><b>${KEYS[i]}.</b> ${esc(o.zh)} <span>${esc(o.en)}</span>${withAnswers && i === q.answer_index ? ' ✔' : ''}</li>`).join('')}</ol>${withAnswers ? `<p class="print-explain"><b>答案 ${KEYS[q.answer_index]}</b>　${esc(q.explanation_zh)}</p>${notes[id] ? `<p class="print-note">我的笔记：${esc(notes[id])}</p>` : ''}` : ''}<p class="print-id">${esc(q.id)} · ${esc(shortName(q.group))}${page === 'wrong' && wrong[id] ? ` · 答错 ${wrong[id]} 次` : ''}</p></article>`;
+    }).join('')}${withAnswers ? '' : `<section class="print-key"><h2>答案</h2><p>${ids.map((id, n) => `${n + 1}. ${KEYS[byId[id].answer_index]}`).join('　')}</p></section>`}`;
+    const settle = img => new Promise(done => {
+      if (img.complete) { if (!img.naturalWidth) img.remove(); done(); return; }
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', () => { img.remove(); done(); }, { once: true });
+    });
+    const images = [...sheet.querySelectorAll('img')];
+    document.body.classList.add('print-questions');
+    if (!images.length) { window.print(); return; }
+    printPending = true;
+    toast('正在载入标志图片，马上打开打印窗口…');
+    Promise.race([Promise.all(images.map(settle)), new Promise(done => setTimeout(done, 5000))]).then(() => { printPending = false; window.print(); });
+  }
+
   // 备份格式保持 version 2：只增加可选字段，旧版网页仍能导入新备份。
   function exportRecords() {
     pauseSession();
-    const backup = { app: 'ontario-g1', version: 2, exportedAt: new Date().toISOString(), hist, wrong, bookmarks, notes, activity, sessions, preferences: prefs, session: session && !session.finished ? { ...session, startedAt: null } : null, language: lang, practice: { groups: [...selectedGroups], count: practiceCount, random: randomOrder, unmastered: unmasteredOnly } };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = url; a.download = `Ontario-G1-学习备份-${dateKey()}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const backup = { app: 'ontario-g1', version: 2, exportedAt: new Date().toISOString(), hist, wrong, bookmarks, notes, activity, sessions, preferences: prefs, session: session && !session.finished ? { ...session, startedAt: null } : null, language: lang, practice: { groups: [...selectedGroups], count: practiceCount, random: randomOrder, unmastered: unmasteredOnly }, srs };
+    download(`Ontario-G1-学习备份-${dateKey()}.json`, JSON.stringify(backup, null, 2), 'application/json');
     toast('备份已导出，请妥善保存。');
   }
   async function importRecords(file) {
@@ -902,6 +1313,7 @@
       // 学习记录整体替换；旧版备份里没有的外观设置和语言保留当前值。
       hist = nextHist; wrong = nextWrong; bookmarks = nextBookmarks; notes = nextNotes;
       activity = cleanActivity(b.activity); sessions = cleanSessions(b.sessions); session = nextSession;
+      srs = b.srs && typeof b.srs === 'object' && !Array.isArray(b.srs) ? cleanSrs(b.srs) : seedSrs();
       prefs = b.preferences && typeof b.preferences === 'object' ? cleanPrefs(b.preferences) : prefs;
       lang = cleanLang(b.language, lang);
       if (b.practice && typeof b.practice === 'object') {
@@ -912,15 +1324,15 @@
         storage.set('g1-groups', [...selectedGroups]); storage.set('g1-count', practiceCount); storage.set('g1-random', randomOrder); storage.set('g1-unseen', unmasteredOnly);
       }
       storage.set('g1-hist', hist); storage.set('g1-wrong', wrong); storage.set('g1-bookmarks', bookmarks); storage.set('g1-notes', notes); storage.set('g1-activity', activity);
-      storage.set('g1-sessions', sessions); storage.set('g1-session', session); storage.set('g1-preferences', prefs); storage.set('g1-lang', lang);
+      storage.set('g1-sessions', sessions); storage.set('g1-session', session); storage.set('g1-preferences', prefs); storage.set('g1-lang', lang); storage.set('g1-srs', srs);
       page = 'home'; render(); toast('学习记录已导入。');
     } catch (_) { toast('无法读取这份备份，请选择由 G1 练习导出的 JSON 文件。'); }
   }
   async function resetRecords() {
-    const yes = await confirmDialog('清空全部练习记录？', '将删除累计答题成绩、错题本、每日统计、练习历史，以及未完成的练习进度。收藏、笔记和阅读设置会保留。此操作不能撤销。', '确认清空', true);
+    const yes = await confirmDialog('清空全部练习记录？', '将删除累计答题成绩、错题本、复习计划、每日统计、练习历史，以及未完成的练习进度。收藏、笔记和阅读设置会保留。此操作不能撤销。', '确认清空', true);
     if (!yes) return;
-    hist = {}; wrong = {}; activity = {}; sessions = []; session = null;
-    ['g1-hist', 'g1-wrong', 'g1-activity'].forEach(k => storage.set(k, {}));
+    hist = {}; wrong = {}; activity = {}; sessions = []; session = null; srs = {};
+    ['g1-hist', 'g1-wrong', 'g1-activity', 'g1-srs'].forEach(k => storage.set(k, {}));
     storage.set('g1-sessions', []); storage.set('g1-session', null);
     render(); toast('练习记录已清空，收藏和笔记已保留。');
   }
@@ -950,6 +1362,25 @@
     if (action === 'resume') { if (!session || session.finished) return; session.startedAt = Date.now(); page = 'quiz'; render(); saveSession(); return; }
     if (action === 'start-practice') return startPractice();
     if (action === 'start-exam') return startExam();
+    if (action === 'start-review' || action === 'start-review-all') return startReview(action === 'start-review-all');
+    if (action === 'start-sprint') return startSprint();
+    if (action === 'sprint-section') { sprintSection = value; render(true); return; }
+    if (action === 'sprint-count') { sprintCount = value === 'all' ? 'all' : Number(value); render(true); return; }
+    if (action === 'ref-doc') { refDoc = value; render(); window.scrollTo({ top: 0, behavior: 'instant' }); return; }
+    if (action === 'ref-jump') {
+      event.preventDefault();
+      const section = document.getElementById(target.dataset.target);
+      if (section) { section.setAttribute('tabindex', '-1'); section.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); section.focus({ preventScroll: true }); }
+      return;
+    }
+    if (action === 'bank-section') { bankSection = value; bankPage = 0; render(true); return; }
+    if (action === 'bank-prev' || action === 'bank-next') { bankPage += action === 'bank-next' ? 1 : -1; render(); view.querySelector('.search-results-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' }); return; }
+    if (action === 'search-example') { bankSearch = value; bankPage = 0; render(); $('#bank-search')?.focus(); return; }
+    if (action === 'bank-from-ref') { bankSearch = refSearch; bankPage = 0; return navigate('search'); }
+    if (action === 'ref-from-bank') { refSearch = bankSearch; return navigate('reference'); }
+    if (action === 'export-md' || action === 'export-csv') return exportQuestions(action === 'export-md' ? 'md' : 'csv');
+    if (action === 'print-answers' || action === 'print-blank') return printQuestions(action === 'print-answers');
+    if (action === 'print-page') return window.print();
     if (action === 'category-section') { categorySection = value; render(true); return; }
     if (action === 'clear-category-search') { categorySearch = ''; render(); return; }
     if (action === 'select-all' || action === 'select-none') {
@@ -994,7 +1425,7 @@
   // 拼音等输入法组字期间不重绘（重绘会打断组字），组字结束后再筛选。
   view.addEventListener('compositionend', event => {
     const el = event.target;
-    if (el.id === 'category-search' || el.id === 'collection-search') el.dispatchEvent(new Event('input', { bubbles: true }));
+    if (['category-search', 'collection-search', 'ref-search', 'bank-search'].includes(el.id)) el.dispatchEvent(new Event('input', { bubbles: true }));
   });
   view.addEventListener('toggle', event => {
     const el = event.target;
@@ -1006,6 +1437,8 @@
     if (event.isComposing) return;
     if (el.id === 'category-search') { categorySearch = el.value; render(true); }
     else if (el.id === 'collection-search') { collectionSearch = el.value; collectionPage = 0; render(true); }
+    else if (el.id === 'ref-search') { refSearch = el.value; render(true); }
+    else if (el.id === 'bank-search') { bankSearch = el.value; bankPage = 0; render(true); }
     else if (el.id === 'question-note' && session) {
       const id = session.items[session.i].id;
       if (el.value.trim()) notes[id] = el.value; else delete notes[id];
@@ -1017,6 +1450,7 @@
     if (el.dataset.groupSelect) { el.checked ? selectedGroups.add(el.dataset.groupSelect) : selectedGroups.delete(el.dataset.groupSelect); storage.set('g1-groups', [...selectedGroups]); render(true); }
     else if (el.id === 'practice-random') { randomOrder = el.checked; storage.set('g1-random', randomOrder); }
     else if (el.id === 'practice-unmastered') { unmasteredOnly = el.checked; storage.set('g1-unseen', unmasteredOnly); render(true); }
+    else if (el.id === 'sprint-unseen') { sprintUnseen = el.checked; render(true); }
     else if (el.id === 'collection-group') { collectionGroup = el.value; collectionPage = 0; render(true); }
     else if (el.id === 'settings-focus') { prefs.focus = el.checked; applyPreferences(); }
     else if (el.id === 'settings-goal') { prefs.goal = Math.min(200, Math.max(5, Math.round(Number(el.value) || 20))); render(true); }
@@ -1028,6 +1462,8 @@
   $('#theme-toggle')?.addEventListener('click', () => { prefs.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; render(true); toast(prefs.theme === 'dark' ? '已切换深色模式。' : '已切换浅色模式。'); });
   $('#font-toggle')?.addEventListener('click', () => { prefs.font = prefs.font === 'large' ? 'normal' : 'large'; render(true); toast(prefs.font === 'large' ? '已开启大字号。' : '已恢复标准字号。'); });
   $('#focus-toggle')?.addEventListener('click', () => { prefs.focus = !prefs.focus; if (page === 'settings') render(true); else applyPreferences(); toast(prefs.focus ? '答题时将使用专注模式。' : '已退出专注模式。'); });
+  $('#search-button')?.addEventListener('click', () => { navigate('search'); $('#bank-search')?.focus(); });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-questions'));
   $('#quiz-back')?.addEventListener('click', () => { if (page !== 'quiz') return; pauseSession(); openSheet(false); page = 'home'; render(); toast('进度已保存，下次可继续。'); });
   $('#mobile-menu')?.addEventListener('click', () => {
     const open = document.body.classList.toggle('sidebar-open');
@@ -1063,6 +1499,7 @@
     if (event.storageArea !== localStorage || (event.key && !event.key.startsWith('g1-'))) return;
     hist = cleanHist(storage.get('g1-hist', {})); wrong = cleanWrong(storage.get('g1-wrong', {})); bookmarks = cleanBookmarks(storage.get('g1-bookmarks', {})); notes = cleanNotes(storage.get('g1-notes', {}));
     activity = cleanActivity(storage.get('g1-activity', {})); sessions = cleanSessions(storage.get('g1-sessions', [])); prefs = cleanPrefs(storage.get('g1-preferences', {})); lang = cleanLang(storage.get('g1-lang', 'both'), lang);
+    srs = cleanSrs(storage.get('g1-srs', {}));
     if (page === 'quiz' || page === 'result') { applyPreferences(false); updateCounts(); return; }
     session = validateSession(storage.get('g1-session', null)); render(true);
   });

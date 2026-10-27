@@ -26,6 +26,33 @@ test('网页是自包含的单文件：不引用外部脚本、样式表或字�
   assert.match(html.slice(0, 300), /<meta charset="utf-8">/i, 'charset 声明应在文件开头');
 });
 
+test('内嵌的必背速查只含链接和粗体两种标签，外链都在新窗口打开', () => {
+  const html = fs.readFileSync(HTML, 'utf8');
+  const ref = JSON.parse(html.match(/^const REF = (.*);\r?$/m)[1]);
+  // html、表头和表格单元格会原样插进页面，其余字段（标题等）渲染时再转义
+  const fragments = [];
+  const walk = (value, key) => {
+    if (typeof value === 'string') {
+      if (key === 'html' || key === 'cell') fragments.push(value);
+    } else if (Array.isArray(value)) {
+      value.forEach(v => walk(v, key === 'head' || key === 'rows' || key === 'cell' ? 'cell' : key));
+    } else if (value && typeof value === 'object') {
+      for (const [k, v] of Object.entries(value)) walk(v, k);
+    }
+  };
+  walk(ref);
+  assert.deepEqual(ref.docs.map(d => d.id), ['cheat', 'info']);
+  assert.ok(fragments.length > 200, `速查内容太少：${fragments.length} 段`);
+  const allowed = /<a href="https?:\/\/[^"<>\s]+" target="_blank" rel="noopener noreferrer">|<\/a>|<\/?strong>/g;
+  let links = 0;
+  for (const fragment of fragments) {
+    links += (fragment.match(/<a /g) || []).length;
+    const rest = fragment.replace(allowed, '');
+    assert.doesNotMatch(rest, /[<>]/, `出现了不允许的标签：${fragment}`);
+  }
+  assert.ok(links > 10, `外部链接应保留：${links}`);
+});
+
 test('离线打开：除官方标志图片外不发出任何外部请求，也没有脚本错误', async () => {
   const browser = await launch();
   try {
