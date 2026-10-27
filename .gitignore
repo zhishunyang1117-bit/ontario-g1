@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+Thumbs.db
+# 测试截图、临时输出
+screenshots/
+tmp/

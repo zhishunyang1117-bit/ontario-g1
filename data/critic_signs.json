@@ -1,0 +1,213 @@
+{
+ "gaps": [
+  {
+   "source_file": "20_pavement-markings.txt",
+   "fact_en": "White lines separate traffic travelling in the SAME direction (yellow lines separate traffic going in opposite directions). SD-32 asks only about the yellow lines; no question asks what white lane lines mean.",
+   "why_testable": "Yellow versus white lines is one of the most common pavement-marking questions. Diagram 3-1 already shows both colours, so a second question on that image, or a new one, is easy to add."
+  },
+  {
+   "source_file": "18_traffic-lights.txt",
+   "fact_en": "Flashing red beacon (image 3-2-16, currently unused): a single flashing red light above an intersection or above a stop sign means come to a complete stop, then go through only when it is safe. SD-24 covers this in text, but no question uses the image or the 'above a stop sign' placement.",
+   "why_testable": "This is the only image from files 17-20 with no question. Beacon recognition is a standard sign-and-signal item. Attach 3-2-16 to SD-24 or write a new picture question."
+  },
+  {
+   "source_file": "18_traffic-lights.txt / 19_pedestrian-signals.txt",
+   "fact_en": "Pedestrians must NOT start crossing on a flashing green (advance green) light or on a left-turn green arrow unless a pedestrian signal tells them to. Where there are no pedestrian signals, they may cross only on a (steady) green.",
+   "why_testable": "The handbook states this twice, in files 18 and 19. SD-29 only hints at it by keying 'steady green'. Adding a direct question (for example, 'You have an advance green; may the pedestrian beside you cross?') would test drivers' expectations at advance greens."
+  },
+  {
+   "source_file": "20_pavement-markings.txt",
+   "fact_en": "A crosswalk is marked by two parallel white lines across the road. A stop line is one single white line. A pedestrian crossover is two white DOUBLE parallel lines with an X in each approaching lane. SD-41 asks only whether crosswalks are always marked.",
+   "why_testable": "Crosswalk, stop line and crossover markings are easy to confuse, which makes them good multiple-choice material. The Diagram 3-6 image (3-6.jpg) is used, but its marking is never tested."
+  },
+  {
+   "source_file": "08_changing-directions.txt (diagram 2-27, unused image)",
+   "fact_en": "Left turn from a ONE-WAY road onto a TWO-WAY road: turn from the left curb lane into the lane just right of the centre line, then move to the right curb lane when you can. RC-42, RC-43 and RC-44 cover the other three combinations; this one has no question.",
+   "why_testable": "This completes the set of four left-turn lane-choice rules, and the unused diagram 2-27 shows exactly this case."
+  },
+  {
+   "source_file": "17a_signs_regulatory.txt",
+   "fact_en": "Reserved-lane signs (image 3-1-32) can reserve lanes for buses, taxis, bicycles and vehicles carrying THREE or more people. SA-54 tests only 'taxis'. Note the contrast with provincial HOV lanes, which require 2+ people (RD-31).",
+   "why_testable": "This is a specific number on a sign page, and it could be confused with the 2+ HOV rule, so it makes a good discriminating question."
+  },
+  {
+   "source_file": "18_traffic-lights.txt",
+   "fact_en": "What a transit priority signal looks like: a round signal mounted on top of a regular traffic signal, showing a white vertical bar on a dark background. SD-13 and SD-14 test what it means and who yields, but not how to recognize it.",
+   "why_testable": "Recognition questions are common for signals that are unusual to newcomers. Without this, a learner may not recognize the signal on the road."
+  },
+  {
+   "source_file": "19_pedestrian-signals.txt",
+   "fact_en": "The pedestrian walk signal is a white walking-person symbol, as opposed to the flashing or steady orange hand that means do not start crossing. No question asks what the walk signal looks like. SD-26 shows the image but asks about right-of-way.",
+   "why_testable": "Matching a symbol to its meaning is basic material for the signals chapter. SD-28 covers the orange hand; the walk symbol has no matching item."
+  },
+  {
+   "source_file": "08_changing-directions.txt (diagram 2-29, unused image)",
+   "fact_en": "Where left-turn lanes are marked on the pavement, turn from the marked lane and keep that same lane position as you turn onto the other road. This matters most with multiple left-turn lanes.",
+   "why_testable": "This is a lane-discipline rule backed by an unused diagram. RC-37 covers only the default 'far left lane' rule."
+  },
+  {
+   "source_file": "08_changing-directions.txt (diagram 2-33, unused image)",
+   "fact_en": "When reversing to the LEFT, turn your body and head to the left and look over your left shoulder, and always check the opposite shoulder as well. If you turn while reversing, check that the front end does not hit anything. RC-55 covers only reversing straight back or to the right.",
+   "why_testable": "Diagram 2-33 is unused, and the left/right shoulder distinction is easy to test."
+  },
+  {
+   "source_file": "08_changing-directions.txt (diagram 2-34, unused image)",
+   "fact_en": "Do not make a three-point turn on a curve, on or near a railway crossing or a hilltop, or near a bridge or tunnel that blocks your view. RC-61 covers only how a three-point turn begins.",
+   "why_testable": "This is a list of prohibited or unsafe places, which suits a 'which location' question. The diagram 2-34 image is unused."
+  },
+  {
+   "source_file": "20_pavement-markings.txt",
+   "fact_en": "At a pedestrian crossover, drivers and cyclists must stop BEFORE the stop/yield line (they may not stop on or past it), and they wait until pedestrians have completely cleared the roadway. Existing items cover who must stop (RB-05) and when you may go (SD-44, RC-13), but not where to stop.",
+   "why_testable": "Where to stop is a natural follow-up to SD-43's crossover markings and to the crossover sign in SA-50."
+  },
+  {
+   "source_file": "19_pedestrian-signals.txt",
+   "fact_en": "An intersection pedestrian signal has crosswalks, walk/don't-walk signals, push-buttons and traffic lights on the MAIN road only. Pedestrian signals also give people more time to cross than regular traffic lights.",
+   "why_testable": "SD-31 covers stop signs on the side road, but the 'lights on the main road only' layout and the 'more crossing time' fact are untested and easy to ask about."
+  },
+  {
+   "source_file": "17a_signs_regulatory.txt",
+   "fact_en": "Lane-direction signs (image 3-1-27): a lane showing only a left arrow MUST turn left, and a lane showing only a right arrow MUST turn right. You cannot go straight from those lanes. SA-48 covers only the shared left/straight lane.",
+   "why_testable": "This is the handbook's own worked example, and a 'can you go straight from a right-arrow-only lane?' question is a common trap."
+  },
+  {
+   "source_file": "18_traffic-lights.txt",
+   "fact_en": "At a simultaneous left turn, a yellow arrow after the green arrow means the green light is about to appear for traffic in one or both directions.",
+   "why_testable": "SD-10 tests what to do but not what the yellow arrow signals. This is low priority."
+  },
+  {
+   "source_file": "17c_signs_temp_info_other.txt",
+   "fact_en": "The slow-moving vehicle sign is required on any vehicle that cannot sustain speeds over 40 km/h, and on farm implements and machinery, not only on farm tractors. EDR (Emergency Detour Route) markers are used when the OPP detour all traffic off a closed provincial highway.",
+   "why_testable": "SC-40 keys only 'farm tractor', and SC-42 does not say who triggers an EDR detour. Both are minor extensions; low priority."
+  },
+  {
+   "source_file": "05_sharing-road-other-road-users.txt (diagram 2-10, unused image)",
+   "fact_en": "Cyclists do not have to ride near the right edge when they are travelling at or above the normal speed of traffic, or when they are turning left or getting into position to turn left.",
+   "why_testable": "RB-12 covers only slower cyclists keeping about 1 m from the curb, so drivers may wrongly expect every cyclist to hug the edge. Low priority; this belongs to the rules half."
+  }
+ ],
+ "duplicates": [
+  {
+   "keep_id": "SD-05",
+   "drop_ids": [
+    "RC-39"
+   ],
+   "reason": "Same scenario (stopped at a red light, wanting to turn right, no sign against it) and same answer (full stop, then turn when clear). Consider attaching the unused diagram 2-24 to SD-05."
+  },
+  {
+   "keep_id": "SD-06",
+   "drop_ids": [
+    "RC-46"
+   ],
+   "reason": "Both ask when a left turn on red is allowed, and both key one-way onto one-way after a complete stop."
+  },
+  {
+   "keep_id": "SD-03",
+   "drop_ids": [
+    "RC-15"
+   ],
+   "reason": "Both test 'no stop line: stop at the crosswalk'. SD-03 has the image and the 'marked or not' detail."
+  },
+  {
+   "keep_id": "SD-38",
+   "drop_ids": [
+    "SA-03"
+   ],
+   "reason": "Both test that you stop at the stop line when there is both a stop line and a crosswalk; the only difference is stop sign versus red light. SD-38 carries the needed 3-5 image, and SA-05 already covers the full order of preference."
+  },
+  {
+   "keep_id": "SA-10",
+   "drop_ids": [
+    "RC-08"
+   ],
+   "reason": "Both test what a yield sign requires (let traffic go first, stop only if needed). SA-10 is the image version; SA-11 already covers the no-traffic case."
+  },
+  {
+   "keep_id": "SA-14",
+   "drop_ids": [
+    "RC-17"
+   ],
+   "reason": "Both key the X-shaped red-and-white railway crossing sign."
+  },
+  {
+   "keep_id": "SA-42",
+   "drop_ids": [
+    "RB-06"
+   ],
+   "reason": "Both key 'the community has identified a special risk to pedestrians' for the community safety zone sign. SA-42 has the image, and SA-43 covers the increased fines."
+  },
+  {
+   "keep_id": "SA-56",
+   "drop_ids": [
+    "SA-57"
+   ],
+   "reason": "Same fact and answer: yield to a bus at a dedicated stop once it signals it is returning to the lane. SA-57 is just SA-56 without the image. RB-34 (bus bay, flashing left signals) also overlaps closely."
+  },
+  {
+   "keep_id": "SD-44",
+   "drop_ids": [
+    "RC-13"
+   ],
+   "reason": "Both ask when you may go at a pedestrian crossover, and both key 'after the pedestrian has fully crossed/cleared the roadway'. SD-44 has the image and the harder far-half scenario."
+  },
+  {
+   "keep_id": "SC-18",
+   "drop_ids": [
+    "RD-45"
+   ],
+   "reason": "Both test that construction-zone speeding fines double when workers are present. SC-17 stays as the separate image-recognition item for sign 3-1-86."
+  },
+  {
+   "keep_id": "SD-41",
+   "drop_ids": [
+    "RB-02"
+   ],
+   "reason": "Both key that crosswalks are not always marked. Alternatively, keep RB-02 and rewrite SD-41 to test the two-parallel-white-lines marking, which is a listed gap."
+  },
+  {
+   "keep_id": "SB-23",
+   "drop_ids": [
+    "SB-24"
+   ],
+   "reason": "Both test the divided-highway-begins sign with the same answer (keep to the right-hand road). SB-24 only adds 'each road is one-way'."
+  },
+  {
+   "keep_id": "SC-01",
+   "drop_ids": [
+    "SC-02"
+   ],
+   "reason": "The same fact asked in reverse: an orange diamond means a temporary condition sign."
+  },
+  {
+   "keep_id": "SA-01",
+   "drop_ids": [
+    "SA-07"
+   ],
+   "reason": "SA-07 (enter after the stop when the way is clear) is fully contained in SA-01's keyed answer and adds no new rule. RC-09 also covers stopping even when no one is around."
+  },
+  {
+   "keep_id": "SD-11",
+   "drop_ids": [
+    "RC-10"
+   ],
+   "reason": "Both test turning left on a plain green only when oncoming traffic and pedestrians have cleared, with essentially the same answer. SD-11 carries the 3-2-8 image."
+  },
+  {
+   "keep_id": "SC-44",
+   "drop_ids": [
+    "SC-47"
+   ],
+   "reason": "The same fact asked in reverse: the rear placard identifies an LCV. SC-45 and SC-46 keep the length and passing facts."
+  }
+ ],
+ "suspicious": [
+  {
+   "id": "SD-19",
+   "problem": "The key is right for a FLASHING red light (file 18: come to a complete stop, then move through only when safe). But the stem says only 'this signal' and relies on image 3-2-13. If the still image does not clearly show flashing, a learner will read it as a steady red, and then the key ('move through only when it is safe') is wrong, because at a steady red you wait for green. The stem should say the red light is flashing."
+  },
+  {
+   "id": "SD-07",
+   "problem": "Image 3-2-4 is a FLASHING green (advance green). The keyed answer ('turn left, go straight or turn right from the proper lane') would also roughly fit a steady green, so if the still image does not show flashing, the item does not test advance green at all. The stem should say the green is flashing, and the answer or explanation should mention that oncoming traffic still faces red (file 18)."
+  }
+ ]
+}

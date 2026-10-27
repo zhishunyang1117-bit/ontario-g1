@@ -1,0 +1,71 @@
+{
+  "handbook_url": "https://www.ontario.ca/document/official-mto-drivers-handbook",
+  "footer": "根据安省官方《MTO Driver's Handbook》原创编写的练习题；2026-10-14 校对更新。不是官方真题，规则以 ontario.ca / drivetest.ca 的现行官方资料为准。",
+  "exam": {
+    "signs": 20,
+    "rules": 20,
+    "pass_ratio": 0.8,
+    "desc": "随机抽 20 道标志题 + 20 道交规题，交卷后按每部分 80% 判定是否通过。",
+    "note": "DriveTest 官方只说明笔试分 2～3 个部分（如标志、规则）、总分至少 80% 通过，没有公布题数。“40 题、每部分 20 题答对 16 题”是常见说法，这里按每部分都达到 80% 来模拟，标准偏严。"
+  },
+  "intro_rules": "依据安省官方《MTO Driver's Handbook》原创编写，并于 2026-10-14 对照官方手册与现行政府资料校核。题目按手册章节分类，中英对照，每题附答案、解析和出处。选项顺序会打乱。这些是练习题，不是官方真题，规则以官方最新资料为准。",
+  "intro_signs": "依据安省官方《MTO Driver's Handbook》的 Signs、Traffic lights、Pedestrian signals、Pavement markings 编写，2026-10-14 校核。题目中英对照，标志图片与官方网页对应。图片需要联网，离线练习可参考文字描述；模拟考试不会提前显示描述。",
+  "groups": [
+    {
+      "id": "LA",
+      "section": "rules",
+      "title_zh": "驾照申请与分级制度（G1/G2/G）"
+    },
+    {
+      "id": "LB",
+      "section": "rules",
+      "title_zh": "保住驾照：扣分、停牌与酒驾/分心驾驶处罚"
+    },
+    {
+      "id": "RA",
+      "section": "rules",
+      "title_zh": "上路准备与日常行驶"
+    },
+    {
+      "id": "RB",
+      "section": "rules",
+      "title_zh": "与行人、自行车、大车、校车等共享道路"
+    },
+    {
+      "id": "RC",
+      "section": "rules",
+      "title_zh": "路口、停车让行、转弯、变道与超车"
+    },
+    {
+      "id": "RD",
+      "section": "rules",
+      "title_zh": "路边停车、高速公路与特殊情况"
+    },
+    {
+      "id": "RE",
+      "section": "rules",
+      "title_zh": "夜间与恶劣天气、紧急情况、节能、保养与拖挂"
+    },
+    {
+      "id": "SA",
+      "section": "signs",
+      "title_zh": "基本标志、禁令（规章）标志与 HOV 标志"
+    },
+    {
+      "id": "SB",
+      "section": "signs",
+      "title_zh": "警告标志"
+    },
+    {
+      "id": "SC",
+      "section": "signs",
+      "title_zh": "施工临时标志、指示标志与其他标志"
+    },
+    {
+      "id": "SD",
+      "section": "signs",
+      "title_zh": "交通信号灯、行人信号与路面标线"
+    }
+  ],
+  "answer_review_date": "2026-10-14"
+}

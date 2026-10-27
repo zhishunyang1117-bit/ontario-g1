@@ -1,0 +1,381 @@
+{
+ "gaps": [
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Failing to obey a stop sign, a traffic light or a railway-crossing signal carries 3 demerit points.",
+   "why_testable": "This is one of the most common offences, and demerit-point questions are a staple of the G1 test. No item asks about it. LB-30 and LB-31 test only failing to signal and radar detectors."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Speeding by 40 km/h or more on a road with a limit under 80 km/h carries 6 demerit points (the same as 50 km/h or more over on any road). For example, 90 km/h in a 50 zone is 6 points. File 22 also lists it as aggressive driving.",
+   "why_testable": "This is the second 6-point speeding threshold. LB-19 covers only 50+ km/h over on a 100 km/h freeway, so a learner could wrongly answer 4 points for 90 km/h in a 50 zone."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Failing to yield the right-of-way carries 3 demerit points.",
+   "why_testable": "It is a core right-of-way offence. It appears only as a wrong option in LB-30 and is never asked directly."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "A fully licensed driver who reaches 9 demerit points gets a second warning letter. The first letter comes at 6 points and the 30-day suspension at 15.",
+   "why_testable": "LB-06 (6 points) and LB-07/LB-08 (15 points) cover the other steps; the 9-point step for fully licensed drivers is missing. Learners also confuse it with 9 points for novices, which means a suspension."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "After a novice's 60-day demerit suspension, points drop to 4. If the novice reaches 9 points again, the licence may be suspended for six months.",
+   "why_testable": "LB-04 and LB-05 cover only the first suspension. The repeat step mirrors LB-10 for full licences, which is tested."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Other 3-point offences: driving through, around or under a railway-crossing barrier; failing to obey a police officer's directions; driving the wrong way on a divided road or a one-way road; improper use of an HOV lane; improper opening of a vehicle door; crowding the driver's seat; driving on a closed road; crossing a divided road where there is no proper crossing.",
+   "why_testable": "These are all on the official demerit table and tie in with rules the bank already teaches (railway gates, Dutch reach, HOV lanes). Only HOV misuse appears, as a distractor in LB-30."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Other 2-point offences: failing to lower your headlight beam; prohibited turns; improper right or left turns; unnecessary slow driving; reversing on a highway; towing people (on toboggans, bicycles, skis); failing to share the road; failing to obey signs.",
+   "why_testable": "Failing to dim high beams and towing people on toboggans are classic test items. Neither is asked; low beams and reversing appear only as distractors in LB-31."
+  },
+  {
+   "source_file": "12_dealing-particular-situations.txt",
+   "fact_en": "Emergency vehicles (police, fire, ambulance, public-utility emergency vehicles) can be identified by flashing red or blue lights, a siren or bell, or alternating flashes of white light from the headlamp high beams. You must stop for one approaching from any direction with flashing red (or red and blue) lights or a siren or bell.",
+   "why_testable": "Recognising an emergency vehicle by its alternating high-beam flashes is a classic recognition question. Current items assume the vehicle is already identified."
+  },
+  {
+   "source_file": "12_dealing-particular-situations.txt",
+   "fact_en": "Failing to respond to an emergency vehicle: fine and 3 demerit points for a first offence. Repeat offences bring higher fines and up to 6 months in jail. The same penalties apply to a stopped tow truck with flashing amber lights.",
+   "why_testable": "RD-67 and LB-27 cover the 3 points only. The jail term for repeat offences is a distinctive number."
+  },
+  {
+   "source_file": "22_other-ways-lose-your-licence.txt",
+   "fact_en": "There is a 7-day vehicle impoundment for any driver caught with a BAC over .08 or who fails or refuses a police demand under the Criminal Code. It applies on top of the 90-day ADLS and even when the vehicle is borrowed or rented; the owner pays towing and storage. Current law also adds a $550 penalty.",
+   "why_testable": "LB-46 and LB-47 test only the 90-day suspension, and LB-59 to LB-61 cover impoundment for interlock and suspended drivers. The impoundment for .08 or refusal is missing."
+  },
+  {
+   "source_file": "22_other-ways-lose-your-licence.txt",
+   "fact_en": "Impaired driving causing death can carry life imprisonment.",
+   "why_testable": "It pairs naturally with LB-67 (bodily harm, 14 years). It is a headline penalty."
+  },
+  {
+   "source_file": "22_other-ways-lose-your-licence.txt",
+   "fact_en": "Your licence is cancelled (not just suspended) if you fail a driver's re-examination, do not pay a reinstatement fee or administrative monetary penalty, your cheque for licence fees is not honoured by your bank, or you voluntarily surrender it.",
+   "why_testable": "LB-54 covers only the reinstatement fee. The other triggers, especially the dishonoured cheque, are easy test items."
+  },
+  {
+   "source_file": "22_other-ways-lose-your-licence.txt",
+   "fact_en": "After a Criminal Code driving conviction, the licence stays suspended until the remedial requirements (such as Back on Track or a driver-improvement interview) are completed, even if the suspension period has ended. Repeat Criminal Code convictions escalate up to a lifetime ban. The interview program also covers convictions in other provinces, Michigan and New York.",
+   "why_testable": "LB-50 and LB-68/LB-69 cover the one-year suspension and program names, but not what happens if the program is not completed, or the lifetime ban."
+  },
+  {
+   "source_file": "08_changing-directions.txt",
+   "fact_en": "When two vehicles from opposite directions are both waiting in an intersection to turn left, each should turn to the left of the other, after yielding to pedestrians and oncoming traffic.",
+   "why_testable": "This is a standard intersection-geometry question. No item covers it."
+  },
+  {
+   "source_file": "08_changing-directions.txt",
+   "fact_en": "Turning left from a one-way road onto a two-way road: turn from the left curb lane into the lane just right of the centre line, then move to the right curb lane when you can.",
+   "why_testable": "RC-42 to RC-44 cover three of the handbook's four left-turn diagrams. This fourth one is missing."
+  },
+  {
+   "source_file": "07_stopping.txt",
+   "fact_en": "Use your right foot for both the brake and gas pedals, so you won't press both at once or turn on your brake lights needlessly.",
+   "why_testable": "It is a simple, frequently tested rule. No item covers it."
+  },
+  {
+   "source_file": "08_changing-directions.txt",
+   "fact_en": "For a sharp turn, use hand-over-hand steering. After the turn, let the wheel slip or feed it back through your hands. Never steer with one finger or the flat of your palm. Try not to brake and steer at the same time.",
+   "why_testable": "Steering technique is tested. RA-43 covers only hand position at 9 and 3 o'clock."
+  },
+  {
+   "source_file": "05_sharing-road-other-road-users.txt",
+   "fact_en": "Many more pedestrians are hit by cars turning left than by cars turning right, because both the driver and the pedestrian are looking elsewhere.",
+   "why_testable": "It is a distinctive comparative fact with an obvious multiple-choice shape. No item covers it."
+  },
+  {
+   "source_file": "07_stopping.txt",
+   "fact_en": "At railway crossings: avoid shifting gears while crossing the tracks and never race a train. Most buses and other public vehicles must stop at crossings that have no gates, lights or stop sign, so be ready to stop behind them.",
+   "why_testable": "Avoid shifting gears on the tracks is a classic test item. RC-23 covers only school buses."
+  },
+  {
+   "source_file": "07_stopping.txt",
+   "fact_en": "In a manual-transmission vehicle, shift down before starting down a long, steep hill (it may not be possible once you are going down). As a guide, use the same gear going down as going up.",
+   "why_testable": "It is a specific, testable rule. SB-27 (steep-hill sign) mentions a lower gear only loosely."
+  },
+  {
+   "source_file": "08_changing-directions.txt",
+   "fact_en": "Roundabout rules: once inside, do not stop except to avoid a collision, and do not change lanes. Do not enter right beside a vehicle already circulating, since it may exit at the next exit. When exiting from the left lane, watch for vehicles on your right that keep circulating. If an emergency vehicle comes before you have entered, pull over to the right and wait.",
+   "why_testable": "RC-47 to RC-54 cover lane choice, direction, right-of-way, a missed exit, signalling and emergency vehicles already inside. No-stopping, the entry gap and the left-lane exit check are missing."
+  },
+  {
+   "source_file": "08_changing-directions.txt",
+   "fact_en": "Unless signs or markings say otherwise, begin and end a right turn close to the right side of the road. If the right lane is not marked, keep as far right as possible, and finish in the right-hand lane of the road you enter.",
+   "why_testable": "RC-37 covers lane position for left turns only."
+  },
+  {
+   "source_file": "09_changing-positions.txt",
+   "fact_en": "Do not pass when approaching the crest of a hill or on a curve where your view of oncoming traffic is blocked. It is unlawful to speed up when another driver is trying to pass you. If you are in the far left lane with a slower vehicle ahead, wait for it to move right rather than suddenly passing on the right.",
+   "why_testable": "These are core passing restrictions. RC-68 does not state that speeding up is illegal, and the hill/curve rule is not asked."
+  },
+  {
+   "source_file": "03_getting-ready-drive.txt",
+   "fact_en": "Headlights must shine a white light visible at least 150 m ahead and strong enough to light objects 110 m away. Red rear lights must be visible from 150 m, and a white light must light the rear plate when the headlights are on. Do not drive with only one headlight or with misaimed lights.",
+   "why_testable": "RA-39 covers the 110 m figure only. The 150 m visibility figures are easily confused with the 150 m dimming rule."
+  },
+  {
+   "source_file": "03_getting-ready-drive.txt",
+   "fact_en": "Windows must not be coated with anything that blocks your view in any direction. The windshield and front door windows must not be coated so that people cannot see inside.",
+   "why_testable": "It is a legal equipment rule (window tint) with no item."
+  },
+  {
+   "source_file": "11_freeway-driving.txt",
+   "fact_en": "Besides vehicles with 2 or more people and green-plate vehicles, HOV lanes may be used by buses (any number of occupants), licensed taxis and airport limousines (even with one occupant), motorcycles, HOT permit holders (where permitted) and emergency vehicles.",
+   "why_testable": "RD-34 tests only green plates. Single-occupant taxis, limousines and buses are commonly tested exceptions."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Drivers 80 or older must complete a vision test and a five-minute screening exercise at a ServiceOntario appointment. They may also need a road test or medical or vision information. Only the renewal fee is charged.",
+   "why_testable": "LB-38 covers only the two-year renewal cycle."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "Requalification: if your G1, G2 or M2 licence is about to expire before you finish graduated licensing, you can keep the same class by passing a test and paying the five-year licensing fee. If it expires first, you must reapply for a Level One licence.",
+   "why_testable": "LB-39 covers the five-year limit but not what happens at expiry."
+  },
+  {
+   "source_file": "21_keeping-your-drivers-licence.txt",
+   "fact_en": "After a name or address change you need a new licence; for a name change a new photo is taken. There is no charge for the new licence. Destroy the old licence and carry the new or temporary one whenever you drive.",
+   "why_testable": "LB-32 covers only the six-day deadline. That the replacement is free is a common question."
+  },
+  {
+   "source_file": "05_sharing-road-other-road-users.txt",
+   "fact_en": "Most deaths in collisions with large trucks result from the other driver's actions, not the truck driver's. Do not tailgate a truck: directly behind it the driver cannot see you and you have nowhere to go. On off-ramps with two left-turn lanes, do not pull up beside a truck turning left. Large vehicles can also throw blinding spray.",
+   "why_testable": "The fault statistic and the tailgating blind spot are standard truck-sharing questions. RB-29 to RB-33 cover the side mirror, passing, right turns, rollback and turbulence."
+  },
+  {
+   "source_file": "10_parking-along-roadways.txt",
+   "fact_en": "Accessible Parking Permit details: issued free; can be certified by a physician, chiropractor, nurse practitioner (extended class), physiotherapist or occupational therapist; temporary (red) permits are not renewable; traveller (purple) permits last up to 1 year; company (green) permits last up to 5 years for organizations transporting people with disabilities; misuse should be reported to police and brings fines and loss of the permit.",
+   "why_testable": "RD-09 to RD-12 cover blue/5 years, red for more than 2 months, purple use and holder presence. The other permit facts are untested."
+  },
+  {
+   "source_file": "10_parking-along-roadways.txt",
+   "fact_en": "Basic parking rules: never park on the travelled part of the road (pull onto the shoulder); do not block a parked vehicle, sidewalk, crosswalk, pedestrian crossing or road entrance, or get in the way of snow clearing. After parking, turn off the ignition and lights, remove the key, lock the door, and do not leave children or animals in the vehicle.",
+   "why_testable": "RD-01 to RD-07 cover distances only. These are general prohibitions the test asks about."
+  },
+  {
+   "source_file": "12_dealing-particular-situations.txt",
+   "fact_en": "Caffeine, a louder radio or an open window are not substitutes for sleep; you can fall asleep without realising it. Tired drivers can be as impaired as drunk drivers. Shift workers, people with untreated sleep disorders and commercial drivers are at higher risk. Take a break every few hours on long trips.",
+   "why_testable": "Fixes for drowsiness that do not work are a common distractor-style question. RD-41 to RD-43 cover timing, warning signs and napping."
+  },
+  {
+   "source_file": "12_dealing-particular-situations.txt",
+   "fact_en": "With animals: do not try to drive around an animal, because its movements are unpredictable. Animals are most active from dusk to dawn. Use high beams when possible and safe, and scan from shoulder to shoulder. Slow down in darkness, rain and fog. Do not try to move an injured animal.",
+   "why_testable": "RD-49 to RD-52 cover shining eyes, honking, viewing and reporting. Not swerving around animals and the dusk-to-dawn risk are missing."
+  },
+  {
+   "source_file": "13_driving-night-and-bad-weather.txt",
+   "fact_en": "In fog or whiteouts, never stop on the travelled part of the road; you could start a chain-reaction collision. Do not speed up suddenly even if the fog seems to clear. Avoid passing and changing lanes. If visibility drops quickly, pull off into a safe parking area.",
+   "why_testable": "RE-07 to RE-10 cover lights and dense fog. The chain-reaction warning is a well-known test item."
+  },
+  {
+   "source_file": "14_dealing-emergencies.txt",
+   "fact_en": "Collision details: a passing driver not involved should stop to help if police have not arrived. Turn off engines, turn on flashers and set up warning signals or flares; if vehicles cannot be moved, place them far enough back for traffic to slow. Give police your name and address, the registered owner's name and address, the plate and permit numbers and the liability insurance card. Get witnesses' names, addresses and phone numbers. Note the tow-truck operator's name and licence number. If trained in first aid, clear the airway and stop bleeding with pressure.",
+   "why_testable": "RE-33 to RE-39 cover the duty to remain, the $5,000 threshold, moving vehicles, not moving the injured, no smoking and shock. The information to exchange and give police is often tested."
+  },
+  {
+   "source_file": "01_getting-your-drivers-licence.txt",
+   "fact_en": "Licence classes: A is tractor-trailers; B is school buses; C is regular buses; D is trucks over 11,000 kg (towed vehicle not over 4,600 kg); E is school buses with up to 24 passengers. An M licence with an L condition allows only limited-speed motorcycles and mopeds; M2 holders must have zero BAC.",
+   "why_testable": "Only Class F (LA-57) and the M exception (LA-55) are asked. The other class labels appear only inside LA-55 distractors."
+  },
+  {
+   "source_file": "01_getting-your-drivers-licence.txt",
+   "fact_en": "Drivers from a licence-exchange jurisdiction with an equivalent licence and at least 2 years' experience get a full Class G licence directly. With less experience they enter G2 and may take the G2 road test once they have 2 years in total. Visitors are not eligible for an Ontario licence.",
+   "why_testable": "LA-46 covers only the under-2-years case. The full-G outcome matters for many new immigrants."
+  },
+  {
+   "source_file": "02_safe-and-responsible-driving.txt",
+   "fact_en": "Traffic laws are made by federal, provincial and municipal governments, and police at each level can enforce them. Breaking the rules of the road is the major cause of collisions. Penalties can include fines, jail and loss of licence.",
+   "why_testable": "These are introductory facts in a recall format. Neither the three levels of government nor the major cause of collisions is asked."
+  },
+  {
+   "source_file": "26_towing.txt",
+   "fact_en": "Driving with a trailer: on curves, stay near the middle of the lane. For a sharp right turn, pull ahead until your front wheels are well past the curb; for a left turn, swing wide into the intersection. If you are holding up traffic, pull over and let it pass. Back up slowly with someone outside directing, using small steering movements. The trailer must have mud guards, fenders or flaps. Keep more of the load in front of the trailer axle. Never try to start a disabled vehicle by towing it.",
+   "why_testable": "RE-53 to RE-68 cover equipment, numbers, wind gusts, backing direction and tow cables. The turning technique and the mud-guard requirement are missing."
+  },
+  {
+   "source_file": "25_vehicle-insurance-and-registration.txt",
+   "fact_en": "To guard against auto insurance fraud: use a licensed insurer, agent or broker (FSRA licenses insurers and agents; RIBO regulates brokers). Refuse to sign blank forms before receiving services. Demand detailed repair and medical bills. Plates you will not reuse can be returned to ServiceOntario.",
+   "why_testable": "LA-67 to LA-69 cover FSRA, collecting details and tow-truck referrals. RIBO and blank forms are untested."
+  },
+  {
+   "source_file": "24_maintaining-your-vehicle.txt",
+   "fact_en": "It is illegal to drive a vehicle in dangerous condition, and an unsafe vehicle can be taken off the road. Replace tires with bumps, bulges, knots, exposed cords or cuts deep enough to expose cords. A tire must not be smaller than the manufacturer's minimum size. Use similar tires on all four wheels. Dashboard warning lights should come on at start-up and then go out; one that stays on after you drive away may mean a serious problem.",
+   "why_testable": "RE-45 to RE-51 cover tire age, tread depth, winter tires, studs and exhaust. Tire damage and warning-light checks are missing."
+  },
+  {
+   "source_file": "15_driving-efficiently.txt",
+   "fact_en": "To save fuel: use overdrive and cruise control on freeways; remove roof racks and extra weight; keep tires properly inflated and the wheels aligned; avoid rush hours; avoid unnecessary cold starts, since a cold engine releases a large burst of pollutants. Cars produce nearly half of all transportation CO2. Smog forms when hydrocarbons and nitrogen oxides react in sunlight.",
+   "why_testable": "RE-40 to RE-44 cover idling, warm-up, A/C, topping off and worn parts. These are lower-priority environment questions."
+  },
+  {
+   "source_file": "22_other-ways-lose-your-licence.txt (current-law update on ontario.ca/page/impaired-driving, July 1, 2026)",
+   "fact_en": "Under the current law, a first roadside occurrence in the warn range or under zero tolerance also brings an 8-hour education course and a $250 penalty. A third occurrence brings a 30-day suspension, a treatment program, a 6-month ignition interlock condition and a $450 penalty.",
+   "why_testable": "This is low priority, and the brief says the outdated handbook figures are already handled. LB-41/LB-44 test only the suspension length for a first occurrence and LB-45 the full second-occurrence package. No item asks about the first-occurrence course and fine or the third-occurrence interlock."
+  }
+ ],
+ "duplicates": [
+  {
+   "keep_id": "RA-38",
+   "drop_ids": [
+    "RE-02"
+   ],
+   "reason": "Both ask how close you must be behind another vehicle at night before switching to low beams. Answer: 60 m."
+  },
+  {
+   "keep_id": "LA-16",
+   "drop_ids": [
+    "RD-22"
+   ],
+   "reason": "Both ask when a G1 driver may use a 400-series highway or freeway. Answer: only with a driving instructor as the accompanying driver."
+  },
+  {
+   "keep_id": "LA-71",
+   "drop_ids": [
+    "LB-34"
+   ],
+   "reason": "Both test the same fact with the same answer: someone asks to use your licence, and lending it is illegal. LA-71 was already reworded to avoid the handbook's sample question."
+  },
+  {
+   "keep_id": "RC-25",
+   "drop_ids": [
+    "RB-04"
+   ],
+   "reason": "Same scenario and answer: a school crossing guard has stopped traffic. You stay stopped until everyone, including the guard, has cleared the roadway and is on the sidewalk."
+  },
+  {
+   "keep_id": "RC-75",
+   "drop_ids": [
+    "RB-11"
+   ],
+   "reason": "Same scenario: a streetcar stop with no passenger area. Same answer: at least 2 m behind the rear doors."
+  },
+  {
+   "keep_id": "RC-31",
+   "drop_ids": [
+    "RB-43"
+   ],
+   "reason": "Same scenario: you are stopped for a school bus with its red lights flashing. Same answer: continue only once the stop arm is folded and the lights are off or the bus moves. The distractors are nearly identical."
+  },
+  {
+   "keep_id": "RD-59",
+   "drop_ids": [
+    "RB-44"
+   ],
+   "reason": "Same scenario: an ambulance approaches from behind on a road with one lane each way. Same answer: stop near the right edge. The distractors are nearly identical; RD-59 also includes 'clear of intersections'."
+  },
+  {
+   "keep_id": "LB-17",
+   "drop_ids": [
+    "RC-32"
+   ],
+   "reason": "Both ask how many demerit points for failing to stop for a school bus. Answer: 6."
+  },
+  {
+   "keep_id": "RC-28",
+   "drop_ids": [
+    "RB-40"
+   ],
+   "reason": "Same scenario: a two-lane road with no median and a school bus stopped facing you with red lights flashing. Both keys say stop, and the distractors overlap. RC-28 is more specific (stop far enough back for children to cross)."
+  },
+  {
+   "keep_id": "RC-14",
+   "drop_ids": [
+    "RA-49"
+   ],
+   "reason": "Both test that signalling a lane change gives no right-of-way and you must still check the way is clear. RA-49's own distractor is 'your signal gives you the right-of-way'."
+  },
+  {
+   "keep_id": "RB-18",
+   "drop_ids": [
+    "RC-11"
+   ],
+   "reason": "Same scenario (turning right with cyclists nearby) and same answer: check your right mirror and blind spot for cyclists coming up from behind."
+  },
+  {
+   "keep_id": "RB-46",
+   "drop_ids": [
+    "RD-66"
+   ],
+   "reason": "Both test that the slow-down and move-over law covers a stopped tow truck with flashing amber lights. RD-48 (roadside-assistance workers) is a different rule and should stay."
+  },
+  {
+   "keep_id": "RA-54",
+   "drop_ids": [
+    "RE-19"
+   ],
+   "reason": "Both test the same rule: do not use cruise control in bad conditions (wet or icy roads; snow or other bad weather)."
+  },
+  {
+   "keep_id": "RE-53",
+   "drop_ids": [
+    "LA-56"
+   ],
+   "reason": "Both key the same fact: a G-class licence can tow up to 4,600 kg. Alternatively, keep LA-56 but change it to ask about the 11,000 kg combined limit."
+  },
+  {
+   "keep_id": "RC-39",
+   "drop_ids": [
+    "SD-05"
+   ],
+   "reason": "Cross-half duplicate: right turn on red with no sign. Same stem and answer: complete stop, then turn when the way is clear."
+  },
+  {
+   "keep_id": "RC-46",
+   "drop_ids": [
+    "SD-06"
+   ],
+   "reason": "Cross-half duplicate: left turn on red is allowed only from a one-way road onto a one-way road, after a complete stop."
+  },
+  {
+   "keep_id": "RC-15",
+   "drop_ids": [
+    "SD-03"
+   ],
+   "reason": "Cross-half duplicate: no stop line, so stop at the crosswalk. This is consistent with the earlier decision to drop SA-04 in favour of RC-15."
+  },
+  {
+   "keep_id": "SD-44",
+   "drop_ids": [
+    "RC-13"
+   ],
+   "reason": "Cross-half duplicate: at a pedestrian crossover you may proceed only after the pedestrian has completely crossed. SD-44 has the diagram and the stronger scenario (pedestrian already on the far half)."
+  },
+  {
+   "keep_id": "SA-42",
+   "drop_ids": [
+    "RB-06"
+   ],
+   "reason": "Cross-half duplicate: a community safety zone means the community has identified a special risk to pedestrians. SA-42 asks the same with the sign image."
+  },
+  {
+   "keep_id": "RD-45",
+   "drop_ids": [
+    "SC-18"
+   ],
+   "reason": "Both test that speeding fines double in a construction zone when workers are present. SC-17 (the sign image) should stay."
+  },
+  {
+   "keep_id": "RB-34",
+   "drop_ids": [
+    "SA-57"
+   ],
+   "reason": "Both test that you must yield to a bus at a bay or stop once it signals to re-enter your lane. SA-56 (the sign image) should stay."
+  },
+  {
+   "keep_id": "SA-14",
+   "drop_ids": [
+    "RC-17"
+   ],
+   "reason": "Cross-half near-duplicate: both key the red-and-white X-shaped railway crossing sign."
+  }
+ ],
+ "suspicious": []
+}

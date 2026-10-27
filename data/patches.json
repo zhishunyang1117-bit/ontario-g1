@@ -1,0 +1,142 @@
+[
+  {
+    "orig_id": "LB-41",
+    "reason": "手册第 22 节（2022 年版）写的是当场停牌 24 小时；ontario.ca Impaired driving 页面（2026-06-30 更新）写明 2026-07-01 起处罚调整，零容忍首次为当场停牌 7 天。",
+    "set": {
+      "question_en": "A 20-year-old with a full G licence is stopped by police and has a small amount of alcohol in their system (below .05). Under the penalties in effect since July 1, 2026, what happens at the roadside for a first occurrence?",
+      "question_zh": "一名 20 岁、持正式 G 牌的司机被警察拦下，体内有少量酒精（低于 0.05）。按 2026 年 7 月 1 日起实行的处罚，第一次被查到时当场会怎样？",
+      "options": [
+        {
+          "en": "An immediate 7-day licence suspension",
+          "zh": "当场暂停驾照 7 天"
+        },
+        {
+          "en": "An immediate 90-day licence suspension",
+          "zh": "当场暂停驾照 90 天"
+        },
+        {
+          "en": "Nothing, because the BAC is below .05",
+          "zh": "没有处罚，因为血液酒精浓度低于 0.05"
+        },
+        {
+          "en": "A verbal warning only",
+          "zh": "只给口头警告"
+        }
+      ],
+      "answer_index": 0,
+      "explanation_zh": "21 岁及以下的司机（以及 G1、G2、M1、M2 新手）必须零酒精、零毒品。ontario.ca 现行规定（2026-07-01 起）：第一次当场停牌 7 天，另要上 8 小时教育课程、交 $250 罚款；第二次 14 天，第三次 30 天。定罪后还要罚 $60～$1,000。注意：手册这一节（2022 年版）还写着“当场停牌 24 小时”，考试时如果选项里没有 7 天、只有 24 小时，就按手册选 24 小时。",
+      "explanation_en": "Drivers 21 and under must have zero alcohol; since July 1, 2026 a first occurrence brings an immediate 7-day suspension (the 2022 handbook text still says 24 hours).",
+      "handbook_basis": "Handbook (2022) says 24-hour roadside suspension; ontario.ca (2026) lists 7-day suspension, 8-hour course, $250 for a first occurrence.",
+      "source_url": "https://www.ontario.ca/page/impaired-driving",
+      "source_title": "ontario.ca · Impaired driving（2026-06-30 更新）",
+      "law_changed": true
+    }
+  },
+  {
+    "orig_id": "LB-42",
+    "reason": "定罪后处罚：手册写罚款加至少 30 天停牌；ontario.ca 写罚款 $60～$1,000，并可能再停牌 30 或 90 天或吊销。答案不变，解析补充现行规定。",
+    "set": {
+      "explanation_zh": "手册写明：21 岁及以下司机违反零酒精规定被定罪，会被罚款，并停牌至少 30 天。ontario.ca 现行写法是罚款 $60～$1,000，并视年龄和驾照类别再停牌 30 天或 90 天，甚至吊销，和“至少 30 天”一致。"
+    }
+  },
+  {
+    "orig_id": "SD-07",
+    "reason": "静态图片看不出绿灯在闪，题干写明“闪烁绿灯”。",
+    "set": {
+      "question_en": "The green light shown is flashing. What may you do when you face it?",
+      "question_zh": "图中的绿灯在闪烁。面对这种信号，你可以怎么做？"
+    }
+  },
+  {
+    "orig_id": "SD-19",
+    "reason": "静态图片看不出红灯在闪，常亮红灯时答案就不对了，题干写明“闪烁红灯”。",
+    "set": {
+      "question_en": "The red light shown is flashing. What must you do when you face it?",
+      "question_zh": "图中的红灯在闪烁。面对这种信号，你必须怎么做？"
+    }
+  },
+  {
+    "orig_id": "LB-44",
+    "reason": "手册（2022 年版）写警告区间首次停牌 3 天；ontario.ca 现行（2026-07-01 起）为 7 天。",
+    "set": {
+      "question_en": "A 35-year-old fully licensed driver registers a blood alcohol concentration in the warn range (.05 to .08) for the first time. Under the penalties in effect since July 1, 2026, how long is the immediate roadside licence suspension?",
+      "question_zh": "一名 35 岁的正式驾照司机第一次被测出血液酒精浓度落在警告区间（0.05～0.08）。按 2026 年 7 月 1 日起实行的处罚，当场暂停驾照多久？",
+      "options": [
+        {
+          "en": "7 days",
+          "zh": "7 天"
+        },
+        {
+          "en": "30 days",
+          "zh": "30 天"
+        },
+        {
+          "en": "90 days",
+          "zh": "90 天"
+        },
+        {
+          "en": "One year",
+          "zh": "1 年"
+        }
+      ],
+      "answer_index": 0,
+      "explanation_zh": "ontario.ca 现行规定（2026-07-01 起）：警告区间第一次当场停牌 7 天，上 8 小时教育课程，罚 $250；第二次 14 天，第三次 30 天。90 天是 0.08 以上或拒绝测试的处罚。注意：手册这一节（2022 年版）还写着第一次 3 天、第二次 7 天，考试时如果选项里没有 7 天，就按手册选 3 天。",
+      "explanation_en": "Since July 1, 2026 a first warn-range occurrence brings a 7-day roadside suspension (the 2022 handbook text still says 3 days).",
+      "handbook_basis": "Handbook (2022): 3 days first, 7 days second; ontario.ca (2026): 7 days first, 14 days second, 30 days third.",
+      "source_url": "https://www.ontario.ca/page/impaired-driving",
+      "source_title": "ontario.ca · Impaired driving（2026-06-30 更新）",
+      "law_changed": true
+    }
+  },
+  {
+    "orig_id": "LB-45",
+    "reason": "手册（2022 年版）写警告区间第二次停牌 7 天加酒精教育课程；ontario.ca 现行为 14 天、16 小时治疗课程、$350。",
+    "set": {
+      "question_en": "A 40-year-old driver is caught driving in the warn range (.05 to .08) for the second time. Under the penalties in effect since July 1, 2026, what are the roadside consequences?",
+      "question_zh": "一名 40 岁的司机第二次被查到血液酒精浓度在警告区间（0.05～0.08）。按 2026 年 7 月 1 日起实行的处罚，当场后果是什么？",
+      "options": [
+        {
+          "en": "A 14-day suspension, a 16-hour treatment program and a $350 penalty",
+          "zh": "停牌 14 天，上 16 小时治疗课程，罚 $350"
+        },
+        {
+          "en": "A 90-day suspension and a 7-day vehicle impoundment",
+          "zh": "停牌 90 天，并扣车 7 天"
+        },
+        {
+          "en": "A warning letter from the Ministry only",
+          "zh": "只收到交通部的警告信"
+        },
+        {
+          "en": "A lifetime licence suspension",
+          "zh": "终身吊销驾照"
+        }
+      ],
+      "answer_index": 0,
+      "explanation_zh": "ontario.ca 现行规定（2026-07-01 起）：警告区间第二次当场停牌 14 天，要上 16 小时治疗课程，罚 $350。停牌 90 天加扣车 7 天是 0.08 以上或拒绝测试的处罚。注意：手册这一节（2022 年版）写的是第二次停牌 7 天并上酒精教育课程，考试时如果选项按旧规定出，就选“7 天加教育课程”。",
+      "explanation_en": "Since July 1, 2026 a second warn-range occurrence brings a 14-day suspension, a 16-hour treatment program and a $350 penalty (the 2022 handbook text says 7 days plus an education program).",
+      "handbook_basis": "Handbook (2022): 7 days and remedial program for a second occurrence; ontario.ca (2026): 14 days, 16-hour treatment program, $350.",
+      "source_url": "https://www.ontario.ca/page/impaired-driving",
+      "source_title": "ontario.ca · Impaired driving（2026-06-30 更新）",
+      "law_changed": true
+    }
+  },
+  {
+    "orig_id": "GAPR-71",
+    "reason": "按 ontario.ca 2026-07-01 起的现行处罚出题，出处改为 ontario.ca 页面。",
+    "set": {
+      "source_url": "https://www.ontario.ca/page/impaired-driving",
+      "source_title": "ontario.ca · Impaired driving（2026-06-30 更新）",
+      "law_changed": true
+    }
+  },
+  {
+    "orig_id": "GAPR-72",
+    "reason": "按 ontario.ca 2026-07-01 起的现行处罚出题，出处改为 ontario.ca 页面。",
+    "set": {
+      "source_url": "https://www.ontario.ca/page/impaired-driving",
+      "source_title": "ontario.ca · Impaired driving（2026-06-30 更新）",
+      "law_changed": true
+    }
+  }
+]
