@@ -51,9 +51,12 @@ test('交卷前不显示对错、解析、笔记和标志描述', async () => {
     assert.deepEqual({ ...leak, alts: undefined }, { feedback: 0, marks: 0, description: 0, notes: 0, alts: undefined });
     for (const alt of leak.alts) assert.equal(alt, '本题道路标志图片');
   }
-  // 图片加载失败时只提示无法加载，不给描述
+  // 图片加载失败时只提示无法加载，不给描述（不是每道标志题都有图片，先跳到有图的一题）
+  const withImage = await page.evaluate(() => JSON.parse(localStorage.getItem('g1-session')).items.findIndex(it => BANK.find(q => q.id === it.id).image_url));
+  await page.click(`.answer-cell[data-index="${withImage}"]`);
   await page.locator('.sign-fallback:not([hidden])').first().waitFor();
   assert.equal(await page.locator('.sign-description').count(), 0);
+  assert.equal(await page.locator('.signbox img').getAttribute('alt'), '本题道路标志图片');
   // 交卷前可以改答案
   await page.click('.answer-cell[data-index="0"]');
   const { answer } = await currentQuestion(page);

@@ -26,9 +26,9 @@ function sharedBrowser() {
   return () => (launching ||= launch());
 }
 
-async function openApp(browser, { viewport = DESKTOP, colorScheme = 'light', storage = null, context = null } = {}) {
+async function openApp(browser, { viewport = DESKTOP, colorScheme = 'light', storage = null, context = null, reducedMotion = 'reduce' } = {}) {
   if (typeof browser === 'function') browser = await browser();
-  const ctx = context || await browser.newContext({ viewport, colorScheme, acceptDownloads: true, reducedMotion: 'reduce' });
+  const ctx = context || await browser.newContext({ viewport, colorScheme, acceptDownloads: true, reducedMotion });
   const external = [];
   if (!context) {
     await ctx.route('**/*', route => {

@@ -17,7 +17,11 @@ const PAGES = ['home', 'practice', 'exam', 'wrong', 'bookmarks', 'stats', 'setti
 async function shoot(browser, label, { viewport, theme }) {
   const prefs = { theme, font: 'normal', goal: 20, focus: false };
   const { page, context } = await openApp(browser, { viewport, colorScheme: theme, storage: { ...storage, 'g1-preferences': prefs } });
-  const save = name => page.screenshot({ path: path.join(out, `${name}-${label}.png`), fullPage: true });
+  const save = async name => {
+    await page.screenshot({ path: path.join(out, `${name}-${label}.png`), fullPage: true });
+    // 手机上再截一张首屏（固定在底部的导航和按钮栏只在首屏截图里位置正确）
+    if (viewport.width < 600) await page.screenshot({ path: path.join(out, `${name}-${label}-screen.png`) });
+  };
   await save('home');
   for (const name of PAGES.slice(1)) {
     await nav(page, name);

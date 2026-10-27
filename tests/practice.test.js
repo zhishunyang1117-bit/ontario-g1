@@ -20,14 +20,14 @@ test('首页显示题库规模和空白状态下的统计', async () => {
 test('分类练习：部分、难度、题量、随机与只练未掌握的筛选都生效', async () => {
   const { page } = await openApp(browser);
   await nav(page, 'practice');
-  const poolText = () => page.locator('.practice-options .section-head .muted').innerText();
+  const poolText = () => page.locator('.pool-count').innerText();
   assert.match(await poolText(), /^723/);
   await page.click('[data-action="category-section"][data-value="signs"]');
   assert.match(await poolText(), /^212/);
   await page.click('[data-action="category-section"][data-value="all"]');
-  await page.selectOption('#practice-difficulty', 'hard');
+  await page.click('[data-action="practice-difficulty"][data-value="hard"]');
   assert.match(await poolText(), /^76/);
-  await page.selectOption('#practice-difficulty', 'all');
+  await page.click('[data-action="practice-difficulty"][data-value="all"]');
   await page.fill('#category-search', '警告');
   assert.equal(await page.locator('.category-card').count(), 1);
   await page.fill('#category-search', '');
