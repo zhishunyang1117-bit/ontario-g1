@@ -10,6 +10,7 @@
 | `tools/quiz_template.html`、`tools/quiz_styles.css`、`tools/quiz_app.js` | 练习网页的结构、样式、交互源文件 |
 | `tools/build.py` | 生成 `03`、`04` 两份题库 md、`data/questions.csv` 和 `05_模拟练习.html`（把 CSS、JS、题库，以及由 `data/cheat.json`、`data/info.json` 解析出的必背速查内容全部内嵌） |
 | `05_模拟练习.html` | 生成结果，用户直接双击打开使用。**不要手改**，改源文件后重新生成 |
+| `index.html`、`.nojekyll` | GitHub Pages 在线版入口（跳转到 `05_模拟练习.html`）；`.nojekyll` 让 Pages 原样发布、不经过 Jekyll |
 | `handbook_text/` | 官方 MTO Driver's Handbook 和现行法规的纯文本副本，出题、核对都以它为准 |
 | `01_考试须知.md`、`02_必背要点.md` | 由 `data/info.json`、`data/cheat.json` 生成 |
 

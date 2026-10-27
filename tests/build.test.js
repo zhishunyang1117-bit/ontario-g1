@@ -2,6 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
 const { ROOT, HTML, launch, openApp, startPractice, nav, answer } = require('./helpers');
 
@@ -51,6 +53,20 @@ test('内嵌的必背速查只含链接和粗体两种标签，外链都在新�
     assert.doesNotMatch(rest, /[<>]/, `出现了不允许的标签：${fragment}`);
   }
   assert.ok(links > 10, `外部链接应保留：${links}`);
+});
+
+test('在线版入口 index.html 跳到练习页面', async () => {
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    await page.route('**/*', route => /^(file|data|blob):/.test(route.request().url()) ? route.continue() : route.abort());
+    await page.goto(pathToFileURL(path.join(ROOT, 'index.html')).href);
+    await page.waitForURL(/05_%E6%A8%A1%E6%8B%9F%E7%BB%83%E4%B9%A0\.html$/);
+    await page.waitForFunction(() => typeof BANK !== 'undefined' && BANK.length === 723);
+    assert.ok(fs.existsSync(path.join(ROOT, '.nojekyll')), 'GitHub Pages 应原样发布文件（不经过 Jekyll）');
+  } finally {
+    await browser.close();
+  }
 });
 
 test('离线打开：除官方标志图片外不发出任何外部请求，也没有脚本错误', async () => {

@@ -13,6 +13,7 @@
 | `03_题库_交通规则.md` | 交规 7 大类 518 题 |
 | `04_题库_标志信号标线.md` | 标志 4 大类 205 题，标志图直接引用 ontario.ca 官方图片 |
 | `05_模拟练习.html` | G1 Studio 学习空间：分类练习、模拟考试、考前冲刺、今日复习、错题、收藏、笔记、必背速查、题库搜索、断点续练和学习统计 |
+| `index.html`、`.nojekyll` | 在线版入口：GitHub Pages 打开网站根地址时跳到 `05_模拟练习.html`；`.nojekyll` 让 Pages 原样发布文件 |
 | `data/questions.json`、`data/questions.csv` | 全部题目数据（csv 可用 Excel 打开或导入 Anki） |
 | `handbook_text/` | 手册各章节的纯文本副本，出题和核对都以它为准 |
 | `tools/build.py` | 改了 `data/` 下的数据后重新生成上面的 md 和 html（网页里的必背速查也由它从 `data/cheat.json`、`data/info.json` 生成） |
@@ -25,6 +26,14 @@
 2. 双击 `05_模拟练习.html` 用浏览器打开练习。界面和题库可离线使用，标志图片需要联网；练习模式图片加载失败时可以参考文字描述，模拟考试只提示图片无法加载并提供重试，避免提前透露答案。
 3. 想按章节看题和解析，就读 `03`、`04` 两个 md 文件（VS Code、Typora 预览效果最好）。
 4. 考试时如果选英文卷，建议练习时切到 “EN” 模式，熟悉英文题干。
+
+## 在线使用（手机方便）
+
+开启 GitHub Pages 后，直接打开 <https://zhishunyang1117-bit.github.io/ontario-g1/> 就能练习，手机和电脑都行，不用下载文件，标志图片、导出备份和打印都能用。
+
+开启方法（只需做一次）：在 GitHub 打开本仓库 → **Settings** → 左侧 **Pages** → “Build and deployment” 下 **Source** 选 “Deploy from a branch”，**Branch** 选 `main`、文件夹选 `/ (root)` → **Save**。等一两分钟，页面顶部出现 “Your site is live at …” 就可以用了。以后 `main` 分支有更新，网站会自动跟着更新。
+
+在线版和本地双击打开的网页各自保存学习记录（浏览器按网址分开存）。要把电脑上的记录搬到在线版：在本地网页的“偏好与数据”导出备份，再到在线版导入；手机和电脑之间也是同样的做法。
 
 ## G1 Studio 功能一览
 
