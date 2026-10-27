@@ -8,6 +8,7 @@ import hashlib
 import json
 import pathlib
 import random
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -70,7 +71,7 @@ def write_md(qs, meta, section, path, title, intro):
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_html(qs, meta, path):
+def render_html(qs, meta):
     tpl = (ROOT / "tools" / "quiz_template.html").read_text(encoding="utf-8")
     styles = (ROOT / "tools" / "quiz_styles.css").read_text(encoding="utf-8")
     app = (ROOT / "tools" / "quiz_app.js").read_text(encoding="utf-8")
@@ -92,8 +93,11 @@ def write_html(qs, meta, path):
                .replace("/*__DATA__*/", script_json(slim))
                .replace("/*__META__*/", script_json(page_meta)))
     head, rest = body.split("</style>", 1)
-    html = f'<!doctype html>\n<html lang="zh-CN">\n<head>\n{head}</style>\n</head>\n<body>\n{rest}\n</body>\n</html>\n'
-    path.write_text(html, encoding="utf-8")
+    return f'<!doctype html>\n<html lang="zh-CN">\n<head>\n{head}</style>\n</head>\n<body>\n{rest}\n</body>\n</html>\n'
+
+
+def write_html(qs, meta, path):
+    path.write_text(render_html(qs, meta), encoding="utf-8")
 
 
 def write_csv(qs, path):
@@ -132,8 +136,16 @@ def write_docs(qs):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--html-only", action="store_true", help="只更新练习网页，保留题库文档和 CSV")
+    parser.add_argument("--check", action="store_true", help="只检查练习网页是否已按源文件重新生成，不写文件")
     args = parser.parse_args()
     qs, meta = load()
+    if args.check:
+        page = ROOT / "05_模拟练习.html"
+        if not page.exists() or page.read_text(encoding="utf-8") != render_html(qs, meta):
+            print("05_模拟练习.html 与源文件不一致，请运行 python tools/build.py --html-only")
+            sys.exit(1)
+        print("05_模拟练习.html is up to date")
+        return
     if args.html_only:
         write_html(qs, meta, ROOT / "05_模拟练习.html")
         print(f"Updated quiz: {len(qs)} questions")

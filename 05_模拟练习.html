@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+<meta charset="utf-8">
 <title>G1 Studio · 安省驾考学习空间</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta charset="utf-8">
 <meta name="description" content="723 道中英对照练习题，分类练习、模拟考试、错题复习与学习进度，开启你的安省驾考之旅。">
 <meta name="theme-color" content="#152d28">
 <style>
@@ -28,6 +28,10 @@
 @media print{.sidebar,.topbar,.app-footer,.quiz-actions,.question-tools,.quiz-sidebar,.toast,.modal-backdrop,.sidebar-overlay,.review-actions{display:none!important}.app-main{margin:0}.view{padding:0;max-width:100%}.panel,.feedback,.opt{break-inside:avoid;box-shadow:none}.opts{gap:5px}body{background:#fff;color:#000}.feedback{background:#f4f4f4}}
 /* Refine contrast and remove layout treatments from summary containers. */
 :root{--muted:#65756a}.hero p:not(.eyebrow),.hero-caption{color:#617457}.session-summary>.section-head{background:none;padding:0;border-radius:0}.session-summary>.session-timer{padding:11px 12px}.session-summary>.session-counts{background:none;padding:0;border-radius:0}.session-summary>.progress{padding:0;border-radius:10px}.session-summary>.section-head>h3{font-size:14px}.hero h2{letter-spacing:-.055em}.view>section+section{margin-top:22px}
+/* Dark theme: keep the hero, icons and avatar on dark surfaces. */
+:root[data-theme=dark] .hero{background:#1b3128;border-color:var(--line)}:root[data-theme=dark] .hero h2{color:var(--ink)}:root[data-theme=dark] .hero .eyebrow,:root[data-theme=dark] .hero p:not(.eyebrow),:root[data-theme=dark] .hero-caption{color:var(--muted)}:root[data-theme=dark] .hero .btn{background:var(--primary);color:#10201a}:root[data-theme=dark] .hero .btn.ghost{background:#ffffff0a;color:var(--ink);border-color:var(--line)}:root[data-theme=dark] .hero-art{opacity:.72}:root[data-theme=dark] .stat-card:nth-child(2) .stat-icon,:root[data-theme=dark] .mode-card:nth-child(3) .mode-icon{background:#233149;color:#a9bde6}:root[data-theme=dark] .stat-card:nth-child(4) .stat-icon{background:#2f2840;color:#c9b6e8}:root[data-theme=dark] .profile-mark{background:var(--surface-alt);color:var(--muted)}:root[data-theme=dark] .week-bar{background:#2c4437}:root[data-theme=dark] .week-day:last-child .week-bar{background:var(--primary)}
+/* Focus mode on phones: keep a way back out of it. */
+@media (max-width:560px){.focus-mode .topbar-controls>#focus-toggle{display:inline-flex}}
 
 </style>
 </head>
@@ -72,7 +76,7 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const storage = {
     get(key, fallback) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } },
-    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_) { return false; } }
+    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_) { if(!storage.warned){storage.warned=true;setTimeout(()=>toast('浏览器没有保存练习记录（可能是无痕模式或存储已满），关闭页面后本次记录会丢失。'),0);} return false; } }
   };
   const finiteCount = n => Number.isFinite(Number(n)) ? Math.min(10000000, Math.max(0, Math.floor(Number(n)))) : 0;
   const safeMap = (value, transform) => {
@@ -80,10 +84,15 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     if (value && typeof value === 'object' && !Array.isArray(value)) Object.keys(value).forEach(id => { if (byId[id]) { const v = transform(value[id]); if (v != null) result[id] = v; } });
     return result;
   };
+  const cleanHist = value => safeMap(value, v => v && typeof v === 'object' ? {c:finiteCount(v.c),w:finiteCount(v.w)} : null);
+  const cleanWrong = value => safeMap(value, v => finiteCount(v) || null);
+  const cleanBookmarks = value => safeMap(value, v => v ? true : null);
+  const cleanNotes = value => safeMap(value, v => typeof v === 'string' ? v.slice(0,4000) : null);
+  const cleanLang = (value, fallback='both') => ['both','en','zh'].includes(value) ? value : fallback;
   const shuffle = values => { const a = values.slice(); for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const dateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   const ratio = (n, d) => d ? Math.round(n / d * 100) : 0;
-  const timeLabel = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
+  const timeLabel = sec => { const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=Math.floor(sec%60); return `${h?`${h}:`:''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; };
   const groupLabel = id => (GROUPS.find(g => g.id === id) || {}).title_zh || id;
   const shortGroups = {LA:'驾照与分级制度',LB:'扣分与驾驶处罚',RA:'日常驾驶准备',RB:'共享道路',RC:'路口与转向',RD:'停车与高速公路',RE:'天气与紧急情况',SA:'规章与禁令标志',SB:'警告标志',SC:'施工与指示标志',SD:'信号灯与路面标线'};
   const difficultyNames = {easy:'基础',medium:'进阶',hard:'挑战'};
@@ -109,11 +118,11 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
   function icon(name) { return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.book}</svg>`; }
   const btn = (action, label, cls='primary', extra='') => `<button type="button" class="btn ${cls}" data-action="${action}" ${extra}>${label}</button>`;
   const progress = (value, cls='') => `<div class="progress ${cls}" role="progressbar" aria-label="完成进度" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100"><i style="width:${value}%"></i></div>`;
-  let lang = ['both','en','zh'].includes(storage.get('g1-lang','both')) ? storage.get('g1-lang','both') : 'both';
-  let hist = safeMap(storage.get('g1-hist',{}), v => v && typeof v === 'object' ? {c:finiteCount(v.c),w:finiteCount(v.w)} : null);
-  let wrong = safeMap(storage.get('g1-wrong',{}), v => finiteCount(v) || null);
-  let bookmarks = safeMap(storage.get('g1-bookmarks',{}), v => v ? true : null);
-  let notes = safeMap(storage.get('g1-notes',{}), v => typeof v === 'string' ? v.slice(0,4000) : null);
+  let lang = cleanLang(storage.get('g1-lang','both'));
+  let hist = cleanHist(storage.get('g1-hist',{}));
+  let wrong = cleanWrong(storage.get('g1-wrong',{}));
+  let bookmarks = cleanBookmarks(storage.get('g1-bookmarks',{}));
+  let notes = cleanNotes(storage.get('g1-notes',{}));
   let activity = cleanActivity(storage.get('g1-activity',{}));
   let sessions = cleanSessions(storage.get('g1-sessions',[]));
   let prefs = cleanPrefs(storage.get('g1-preferences',{}));
@@ -125,6 +134,9 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
   let randomOrder = storage.get('g1-random',true) !== false, unmasteredOnly = storage.get('g1-unseen',false) === true;
   let collectionSearch = '', collectionGroup = 'all', collectionPage = 0, sheetPage = 0, reviewPage = 0;
   let toastTimeout, confirmPending = null;
+  // 重绘时保留的界面状态：已展开的回看题、打开着笔记框的题、本次打开页面后加载失败的标志图片。
+  const openReviews = new Set(), brokenImages = new Set();
+  let notesOpenFor = null;
 
   function cleanPrefs(value) { const v=value && typeof value==='object' ? value : {}; return {theme:['light','dark','system'].includes(v.theme) ? v.theme : 'light',font:['normal','large'].includes(v.font) ? v.font : 'normal',goal:Math.min(200,Math.max(5,finiteCount(v.goal)||20)),focus:!!v.focus}; }
   function cleanActivity(value) { const result={}; if (value && typeof value==='object') Object.keys(value).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(-1500).forEach(k=> { const v=value[k]; if(v && typeof v==='object') result[k]={c:finiteCount(v.c),w:finiteCount(v.w)}; }); return result; }
@@ -148,15 +160,15 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
   function saveSession() { if(!session || session.finished) return; const snapshot={...session,elapsed:elapsed(),startedAt:null}; storage.set('g1-session',snapshot); }
   function pauseSession() { if(session && !session.finished) { session.elapsed=elapsed(); session.startedAt=null; saveSession(); } }
   function toast(message) { const el=$('#toast'); if(!el) return; el.textContent=message; el.classList.add('visible'); clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>el.classList.remove('visible'),3000); }
-  function applyPreferences() {
+  function applyPreferences(save=true) {
     const theme=prefs.theme==='system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light') : prefs.theme;
     document.documentElement.dataset.theme=theme; document.documentElement.dataset.font=prefs.font;
     document.body.classList.toggle('focus-mode',prefs.focus && page==='quiz'); document.body.classList.toggle('large-type',prefs.font==='large');
     $('#focus-toggle')?.setAttribute('aria-pressed',String(prefs.focus)); $('#font-toggle')?.setAttribute('aria-pressed',String(prefs.font==='large'));
     $('#theme-toggle')?.setAttribute('aria-label',theme==='dark'?'切换浅色模式':'切换深色模式');
-    storage.set('g1-preferences',prefs);
+    if(save) storage.set('g1-preferences',prefs);
   }
-  function textPair(zh,en,cls='') { if(lang==='zh') return `<span class="zh ${cls}">${esc(zh||en)}</span>`; if(lang==='en') return `<span class="en ${cls}">${esc(en||zh)}</span>`; return `<span class="zh ${cls}">${esc(zh||en)}</span><span class="en ${cls}">${esc(en||zh)}</span>`; }
+  function textPair(zh,en,cls='') { const enSpan=`<span class="en ${cls}"${en?' lang="en"':''}>${esc(en||zh)}</span>`; if(lang==='zh') return `<span class="zh ${cls}">${esc(zh||en)}</span>`; if(lang==='en') return enSpan; return `<span class="zh ${cls}">${esc(zh||en)}</span>${enSpan}`; }
   function setHeader(title,subtitle) { if($('#page-title')) $('#page-title').textContent=title; if($('#page-subtitle')) $('#page-subtitle').textContent=subtitle; }
   function closeMobile() { document.body.classList.remove('sidebar-open'); $('#mobile-menu')?.setAttribute('aria-expanded','false'); }
   function navigate(next) { if(!['home','practice','exam','wrong','bookmarks','stats','settings'].includes(next)) return; if(page==='quiz') pauseSession(); page=next; collectionSearch=''; collectionGroup='all'; collectionPage=0; closeMobile(); render(); window.scrollTo({top:0,behavior:'instant'}); }
@@ -218,7 +230,9 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
 
   function questionMarkup(item, reveal, exam=false) {
     const q=byId[item.id],correct=item.pick===q.answer_index;
-    const image=q.image_url?`<div class="signbox"><img src="${esc(q.image_url)}" alt="${esc(exam&&!reveal?'本题道路标志图片':(lang==='en'?q.sign_desc_en:q.sign_desc_zh)||'道路标志图片')}" loading="eager"><p class="sign-fallback" hidden>标志图片暂时无法加载，请检查网络后重试。${btn('retry-image','重新加载图片','ghost small')}</p>${(!exam||reveal)&&(q.sign_desc_zh||q.sign_desc_en)?`<p class="sign-description">${textPair(q.sign_desc_zh,q.sign_desc_en)}</p>`:''}</div>`:'';
+    // 文字描述是图片的兜底：练习时图片加载失败或答题后才显示，模拟考试交卷前不显示。已失败的图片不再重复请求。
+    const broken=brokenImages.has(q.image_url);
+    const image=q.image_url?`<div class="signbox"><img data-src="${esc(q.image_url)}" ${broken?'hidden':`src="${esc(q.image_url)}"`} alt="${esc(exam&&!reveal?'本题道路标志图片':(lang==='en'?q.sign_desc_en:q.sign_desc_zh)||'道路标志图片')}" loading="eager"><p class="sign-fallback" ${broken?'':'hidden'}>标志图片暂时无法加载，请检查网络后重试。${btn('retry-image','重新加载图片','ghost small')}</p>${(!exam||reveal)&&(q.sign_desc_zh||q.sign_desc_en)?`<p class="sign-description" ${reveal||broken?'':'hidden'}>${textPair(q.sign_desc_zh,q.sign_desc_en)}</p>`:''}</div>`:'';
     const options=item.order.map((oi,index)=>`<button type="button" class="opt ${item.pick===oi?'selected':''} ${reveal&&oi===q.answer_index?'correct':''} ${reveal&&item.pick===oi&&!correct?'incorrect':''}" data-action="choose" data-option="${oi}" data-focus="option-${oi}" ${reveal?'disabled':''} aria-pressed="${item.pick===oi}"><span class="option-key">${KEYS[index]}</span><span class="option-copy">${textPair(q.options[oi].zh,q.options[oi].en)}</span><span class="option-status">${reveal&&oi===q.answer_index?icon('check'):reveal&&item.pick===oi&&!correct?icon('close'):''}</span></button>`).join('');
     const feedback=reveal?`<section class="feedback ${correct?'correct':'incorrect'}" role="status"><div class="feedback-heading">${icon(correct?'check':item.pick===null?'note':'close')}<strong>${item.pick===null?'本题未作答':correct?'回答正确，继续保持。':'差一点，记住这个知识点。'}</strong><span>正确答案 ${KEYS[item.order.indexOf(q.answer_index)]}</span></div><div class="explanation">${textPair(q.explanation_zh,q.explanation_en)}</div><a class="source-link" href="${esc(q.source_url)}" target="_blank" rel="noopener noreferrer">${icon('book')} ${esc(q.source_title||'官方手册依据')} ${icon('external')}</a></section>`:'';
     return `<div class="stem">${textPair(q.question_zh,q.question_en)}</div>${image}<div class="opts">${options}</div>${feedback}`;
@@ -229,9 +243,9 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     const last=session.i===n-1,correct=session.items.filter(it=>it.pick===byId[it.id].answer_index).length;
     sheetPage=Math.floor(session.i/60);
     setHeader(modeName(session.mode),isExam?'交卷前可自由修改答案，答案和解析将在交卷后显示。':'认真理解每条规则，让每一次作答都有收获。');
-    view.innerHTML=`<div class="quiz-layout"><section class="panel question-panel"><div class="quiz-topline"><span class="quiz-position">QUESTION <strong>${String(session.i+1).padStart(2,'0')}</strong><span> / ${n}</span></span><div class="question-tools"><button type="button" class="icon-btn ${bookmarks[q.id]?'active':''}" data-action="bookmark" title="收藏这道题" aria-label="${bookmarks[q.id]?'取消收藏':'收藏这道题'}" aria-pressed="${!!bookmarks[q.id]}">${icon('bookmark')}</button><button type="button" class="icon-btn ${item.flagged?'active':''}" data-action="flag" title="标记稍后回看" aria-label="标记稍后回看" aria-pressed="${item.flagged}">${icon('flag')}</button></div></div>${progress(ratio(answered,n),'quiz-progress')}<div class="question-meta"><span class="chip ${q.section}">${q.section==='signs'?'道路标志':'交通规则'}</span><span>${esc(shortGroups[q.group]||groupLabel(q.group))}</span>${q.difficulty?`<span class="difficulty ${esc(q.difficulty)}">${difficultyNames[q.difficulty]||q.difficulty}</span>`:''}<span class="question-id">${esc(q.id)}</span></div>${questionMarkup(item,reveal,isExam)}
-      ${(!isExam||reveal)?`<details class="notes-box" ${notes[q.id]?'open':''}><summary>${icon('note')} 我的笔记${notes[q.id]?'<span class="status-dot"></span>':''}</summary><label class="sr-only" for="question-note">这道题的个人笔记</label><textarea id="question-note" maxlength="4000" rows="3" placeholder="写下易错点或记忆方法，笔记会自动保存。">${esc(notes[q.id]||'')}</textarea><span class="footnote">仅保存在当前浏览器，可在设置中导出备份。</span></details>`:''}
-      <div class="quiz-actions"><div class="row">${btn('previous',`${icon('back')} 上一题`,'ghost',session.i===0?'disabled':'')}${btn('pause',`${icon('pause')} 保存并退出`,'ghost')}</div><div class="row">${!isExam&&item.pick===null?btn('skip','暂时跳过','ghost small'):''}${last?btn('finish',isExam?'交卷并查看结果':`完成练习 ${icon('check')}`):btn('next',`下一题 ${icon('arrow')}`)}</div></div><div class="shortcut-row"><span><kbd>1</kbd> – <kbd>4</kbd> / <kbd>A</kbd> – <kbd>D</kbd> 选答案</span><span><kbd>Enter</kbd> 下一题</span><span><kbd>B</kbd> 选择 B · <kbd>Shift</kbd> + <kbd>B</kbd> 收藏</span></div></section>
+    view.innerHTML=`<div class="quiz-layout"><section class="panel question-panel"><div class="quiz-topline"><span class="quiz-position">QUESTION <strong>${String(session.i+1).padStart(2,'0')}</strong><span> / ${n}</span></span><div class="question-tools"><button type="button" class="icon-btn ${bookmarks[q.id]?'active':''}" data-action="bookmark" data-focus="bookmark" title="收藏这道题（Shift+B）" aria-label="收藏这道题" aria-pressed="${!!bookmarks[q.id]}">${icon('bookmark')}</button><button type="button" class="icon-btn ${item.flagged?'active':''}" data-action="flag" data-focus="flag" title="标记稍后回看" aria-label="标记稍后回看" aria-pressed="${item.flagged}">${icon('flag')}</button></div></div>${progress(ratio(answered,n),'quiz-progress')}<div class="question-meta"><span class="chip ${q.section}">${q.section==='signs'?'道路标志':'交通规则'}</span><span>${esc(shortGroups[q.group]||groupLabel(q.group))}</span>${q.difficulty?`<span class="difficulty ${esc(q.difficulty)}">${difficultyNames[q.difficulty]||q.difficulty}</span>`:''}<span class="question-id">${esc(q.id)}</span></div>${questionMarkup(item,reveal,isExam)}
+      ${(!isExam||reveal)?`<details class="notes-box" ${notes[q.id]||notesOpenFor===q.id?'open':''}><summary data-focus="notes">${icon('note')} 我的笔记${notes[q.id]?'<span class="status-dot"></span>':''}</summary><label class="sr-only" for="question-note">这道题的个人笔记</label><textarea id="question-note" maxlength="4000" rows="3" placeholder="写下易错点或记忆方法，笔记会自动保存。">${esc(notes[q.id]||'')}</textarea><span class="footnote">仅保存在当前浏览器，可在设置中导出备份。</span></details>`:''}
+      <div class="quiz-actions"><div class="row">${btn('previous',`${icon('back')} 上一题`,'ghost',`data-focus="previous" ${session.i===0?'disabled':''}`)}${btn('pause',`${icon('pause')} 保存并退出`,'ghost','data-focus="pause"')}</div><div class="row">${!isExam&&item.pick===null?btn('skip','暂时跳过','ghost small','data-focus="skip"'):''}${last?btn('finish',isExam?'交卷并查看结果':`完成练习 ${icon('check')}`,'primary','data-focus="finish"'):btn('next',`下一题 ${icon('arrow')}`,'primary','data-focus="next"')}</div></div><div class="shortcut-row"><span><kbd>1</kbd> – <kbd>4</kbd> / <kbd>A</kbd> – <kbd>D</kbd> 选答案</span><span><kbd>Enter</kbd> 下一题</span><span><kbd>B</kbd> 选择 B · <kbd>Shift</kbd> + <kbd>B</kbd> 收藏</span></div></section>
       <aside class="quiz-sidebar"><section class="panel session-summary"><div class="section-head"><h3>${isExam?'本次模拟':'本次练习'}</h3><span class="chip live"><span class="status-dot"></span> 进行中</span></div><div class="session-timer">${icon('clock')}<strong id="session-timer">${timeLabel(elapsed())}</strong><span class="muted">已用时间</span></div><div class="session-counts"><div><strong>${answered}<small> / ${n}</small></strong><span>已完成</span></div><div><strong>${isExam?flags:ratio(correct,answered)+(answered?'%':'')}</strong><span>${isExam?'标记回看':'当前正确率'}</span></div></div>${progress(ratio(answered,n))}<p class="footnote">${isExam?`标志 ${META.exam.signs} 题 + 交规 ${META.exam.rules} 题，各部分须达 ${META.exam.pass_ratio*100}%。`:'练习记录自动保存，随时可以回来继续。'}</p>${isExam?btn('finish','提前交卷','ghost small'):''}</section><section class="panel answer-sheet"><div class="section-head"><h3>答题卡</h3><span class="muted">${session.i+1} / ${n}</span></div><div class="answer-legend"><span><i class="legend-dot answered"></i>已答</span>${isExam?'':`<span><i class="legend-dot incorrect"></i>答错</span>`}<span>${icon('flag')}待回看 ${flags}</span></div><div id="answer-sheet-content">${answerGrid()}</div><div class="sheet-actions">${btn('jump-unanswered','下一道未答','ghost small')}${btn('jump-flagged','查看标记题','ghost small',flags?'':'disabled')}</div></section><div class="quiz-tip">${icon('spark')}<p>${isExam?'遇到不确定的题目，先标记，再继续。交卷前可以回到这里检查。':'看懂解析，再前进一步。把答案背后的规则变成自己的判断。'}</p></div></aside></div>`;
     bindImages();
   }
@@ -239,7 +253,8 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     const n=session.items.length,pages=Math.ceil(n/60);sheetPage=Math.max(0,Math.min(pages-1,sheetPage));
     return `<div class="answer-grid" aria-label="题目导航">${session.items.slice(sheetPage*60,sheetPage*60+60).map((it,k)=>{const i=sheetPage*60+k,reveal=session.mode!=='exam'||session.finished,correct=it.pick===byId[it.id].answer_index;return `<button type="button" class="answer-cell ${i===session.i?'current':''} ${it.pick!==null?'answered':''} ${reveal&&it.pick!==null?(correct?'correct':'incorrect'):''} ${it.flagged?'flagged':''}" data-action="jump" data-index="${i}" aria-label="第 ${i+1} 题，${it.pick===null?'未答':reveal?(correct?'答对':'答错'):'已答'}${it.flagged?'，已标记':''}" ${i===session.i?'aria-current="step"':''}>${i+1}${it.flagged?'<i></i>':''}</button>`;}).join('')}</div>${pages>1?`<div class="pagination compact">${btn('sheet-prev','上一页','ghost small',sheetPage===0?'disabled':'')}<span>${sheetPage+1} / ${pages}</span>${btn('sheet-next','下一页','ghost small',sheetPage===pages-1?'disabled':'')}</div>`:''}`;
   }
-  function bindImages() {view.querySelectorAll('.signbox img').forEach(img=>img.addEventListener('error',()=>{img.hidden=true;const msg=img.parentElement.querySelector('.sign-fallback');if(msg)msg.hidden=false;},{once:true}));}
+  function bindImages() {view.querySelectorAll('.signbox img[src]').forEach(watchImage);}
+  function watchImage(img) {img.addEventListener('error',()=>{const box=img.closest('.signbox');brokenImages.add(img.dataset.src);img.hidden=true;box.querySelector('.sign-fallback').hidden=false;box.querySelector('.sign-description')?.removeAttribute('hidden');},{once:true});}
   function record(item) {
     if(item.recorded||item.pick===null) return;
     const q=byId[item.id],correct=item.pick===q.answer_index,h=hist[q.id]||{c:0,w:0};h[correct?'c':'w']++;hist[q.id]=h;
@@ -251,7 +266,8 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     if(page!=='quiz'||!session||session.finished) return;
     const item=session.items[session.i],q=byId[item.id];if(!Number.isInteger(index)||index<0||index>=q.options.length||(session.mode!=='exam'&&item.pick!==null))return;
     item.pick=index;if(session.mode!=='exam')record(item);saveSession();render(true);
-    if(session.mode!=='exam')$('#view [data-action="next"]')?.focus({preventScroll:true});
+    // 练习：焦点移到“下一题/完成练习”；考试：焦点跟着所选答案，按 Enter 即进入下一题。
+    view.querySelector(session.mode==='exam'?`.opt[data-option="${index}"]`:'.quiz-actions [data-action="next"], .quiz-actions [data-action="finish"]')?.focus({preventScroll:true});
   }
   function moveTo(index) {if(!session||index<0||index>=session.items.length)return;session.i=index;saveSession();render();view.querySelector('.question-panel')?.scrollIntoView({block:'start',behavior:'instant'});}
   function nextQuestion() {if(!session)return;if(session.i<session.items.length-1)moveTo(session.i+1);else finishSession();}
@@ -262,7 +278,7 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     pauseSession();if(session.mode==='exam')session.items.forEach(record);session.finished=true;session.finishedAt=Date.now();
     const correct=session.items.filter(it=>it.pick===byId[it.id].answer_index).length,answered=session.items.filter(it=>it.pick!==null).length;
     const passed=session.mode==='exam'&&['signs','rules'].every(section=>{const items=session.items.filter(it=>byId[it.id].section===section);return items.filter(it=>it.pick===byId[it.id].answer_index).length>=Math.ceil(items.length*META.exam.pass_ratio);});
-    sessions.push({id:session.id,mode:session.mode,total:session.items.length,correct,answered,duration:session.elapsed,finishedAt:session.finishedAt,passed});sessions=sessions.slice(-100);storage.set('g1-sessions',sessions);storage.set('g1-session',null);page='result';reviewPage=0;render();window.scrollTo({top:0,behavior:'instant'});
+    sessions.push({id:session.id,mode:session.mode,total:session.items.length,correct,answered,duration:session.elapsed,finishedAt:session.finishedAt,passed});sessions=sessions.slice(-100);storage.set('g1-sessions',sessions);storage.set('g1-session',null);page='result';reviewPage=0;openReviews.clear();render();window.scrollTo({top:0,behavior:'instant'});
   }
   function renderResult() {
     if(!session?.finished){page='home';return render();}
@@ -271,7 +287,7 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     const revisit=session.items.filter(it=>it.pick!==byId[it.id].answer_index),pages=Math.ceil(revisit.length/8);reviewPage=Math.min(Math.max(0,pages-1),reviewPage);
     setHeader(isExam?'模拟考试结果':'练习完成',isExam?'读懂每个错题，比一个分数更有价值。':'每次练习，都在为更从容的出发做准备。');
     view.innerHTML=`<section class="panel result-hero"><div class="result-orb ${isExam&&!passed?'warm':''}">${icon(isExam?(passed?'trophy':'target'):'check')}</div><span class="eyebrow">${isExam?'MOCK TEST COMPLETE':'ONE STEP CLOSER'}</span><h2>${isExam?(passed?'这次模拟，通过。':'找到薄弱点，就是进步的开始。'):'又向前迈进了一步。'}</h2><p class="muted">完成 ${session.items.filter(it=>it.pick!==null).length} 道作答 · 用时 ${timeLabel(session.elapsed)}</p><div class="result-grid"><div class="result-stat"><strong>${ratio(c,n)}<small>%</small></strong><span>本次正确率</span></div><div class="result-stat"><strong>${c}</strong><span>答对</span></div><div class="result-stat"><strong>${w}</strong><span>答错</span></div><div class="result-stat"><strong>${unanswered}</strong><span>未作答</span></div></div>${isExam?`<div class="exam-parts result-parts">${parts.map(p=>`<div class="${p.pass?'pass':'fail'}">${icon(p.pass?'check':'target')}<strong>${p.section==='signs'?'道路标志':'交通规则'} ${p.c} / ${p.n}</strong><span>${p.pass?'已达到':'未达到'} ${p.need} 道通过标准</span></div>`).join('')}</div><p class="footnote">${esc(META.exam.note)}</p>`:''}<div class="row result-actions">${revisit.length?btn('retry-result',`${icon('repeat')} 重练错题与未答题`):btn('quick',`${icon('play')} 再来一组练习`)}${isExam?btn('start-exam','再考一次','secondary'):''}${btn('navigate','回到学习总览','ghost','data-page-target="home"')}</div></section>
-      ${revisit.length?`<section class="panel result-review"><div class="section-head"><div><span class="eyebrow">LEARN FROM EVERY ANSWER</span><h3>回看 ${revisit.length} 道错题与未答题</h3></div><span class="muted">答案与解析</span></div><div class="review-list">${revisit.slice(reviewPage*8,reviewPage*8+8).map(it=>`<details class="review-item"><summary><span class="review-status ${it.pick===null?'unanswered':'incorrect'}">${icon(it.pick===null?'note':'close')}</span><span><small>${esc(it.id)} · ${esc(shortGroups[byId[it.id].group])} · ${it.pick===null?'未作答':'答错'}</small><strong>${esc(lang==='en'?byId[it.id].question_en:byId[it.id].question_zh)}</strong></span>${icon('chevron')}</summary><div class="review-question">${questionMarkup(it,true,isExam)}<button class="btn ghost small" type="button" data-action="bookmark-id" data-id="${it.id}">${icon('bookmark')} ${bookmarks[it.id]?'取消收藏':'收藏这道题'}</button></div></details>`).join('')}</div>${pages>1?`<div class="pagination">${btn('review-prev','上一页','ghost small',reviewPage===0?'disabled':'')}<span>${reviewPage+1} / ${pages}</span>${btn('review-next','下一页','ghost small',reviewPage===pages-1?'disabled':'')}</div>`:''}</section>`:`<section class="panel empty-state">${icon('spark')}<h3>本次没有错题</h3><p>保持节奏，去挑战更多主题。</p></section>`}`;
+      ${revisit.length?`<section class="panel result-review"><div class="section-head"><div><span class="eyebrow">LEARN FROM EVERY ANSWER</span><h3>回看 ${revisit.length} 道错题与未答题</h3></div><span class="muted">答案与解析</span></div><div class="review-list">${revisit.slice(reviewPage*8,reviewPage*8+8).map(it=>`<details class="review-item" data-review="${esc(it.id)}" ${openReviews.has(it.id)?'open':''}><summary><span class="review-status ${it.pick===null?'unanswered':'incorrect'}">${icon(it.pick===null?'note':'close')}</span><span><small>${esc(it.id)} · ${esc(shortGroups[byId[it.id].group])} · ${it.pick===null?'未作答':'答错'}</small><strong>${esc(lang==='en'?byId[it.id].question_en:byId[it.id].question_zh)}</strong></span>${icon('chevron')}</summary><div class="review-question">${questionMarkup(it,true,isExam)}<button class="btn ghost small" type="button" data-action="bookmark-id" data-id="${it.id}">${icon('bookmark')} ${bookmarks[it.id]?'取消收藏':'收藏这道题'}</button></div></details>`).join('')}</div>${pages>1?`<div class="pagination">${btn('review-prev','上一页','ghost small',reviewPage===0?'disabled':'')}<span>${reviewPage+1} / ${pages}</span>${btn('review-next','下一页','ghost small',reviewPage===pages-1?'disabled':'')}</div>`:''}</section>`:`<section class="panel empty-state">${icon('spark')}<h3>本次没有错题</h3><p>保持节奏，去挑战更多主题。</p></section>`}`;
     bindImages();
   }
 
@@ -305,9 +321,10 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     if(!file)return;if(file.size>8*1024*1024){toast('备份文件过大，请选择 8 MB 以下的 G1 备份。');return;}
     try {
       const b=JSON.parse(await file.text());if(!b||b.app!=='ontario-g1'||![1,2].includes(b.version)||!b.hist||typeof b.hist!=='object'||Array.isArray(b.hist))throw new Error('format');
-      const nextHist=safeMap(b.hist,v=>v&&typeof v==='object'?{c:finiteCount(v.c),w:finiteCount(v.w)}:null),nextWrong=safeMap(b.wrong,v=>finiteCount(v)||null),nextBookmarks=safeMap(b.bookmarks,v=>v?true:null),nextNotes=safeMap(b.notes,v=>typeof v==='string'?v.slice(0,4000):null),nextSession=validateSession(b.session);
+      const nextHist=cleanHist(b.hist),nextWrong=cleanWrong(b.wrong),nextBookmarks=cleanBookmarks(b.bookmarks),nextNotes=cleanNotes(b.notes),nextSession=validateSession(b.session);
       const yes=await confirmDialog('导入这份学习备份？',`备份包含 ${Object.keys(nextHist).length} 道题的练习记录、${Object.keys(nextWrong).length} 道错题、${Object.keys(nextBookmarks).length} 道收藏及 ${Object.keys(nextNotes).length} 条笔记${nextSession?'，并有一份未完成的练习':''}。确认后会替换当前学习记录，建议先导出当前记录。`,'确认导入');if(!yes)return;
-      hist=nextHist;wrong=nextWrong;bookmarks=nextBookmarks;notes=nextNotes;activity=cleanActivity(b.activity);sessions=cleanSessions(b.sessions);session=nextSession;prefs=cleanPrefs(b.preferences);lang=['both','en','zh'].includes(b.language)?b.language:lang;
+      // 学习记录整体替换；旧版备份里没有的外观设置和语言保留当前值。
+      hist=nextHist;wrong=nextWrong;bookmarks=nextBookmarks;notes=nextNotes;activity=cleanActivity(b.activity);sessions=cleanSessions(b.sessions);session=nextSession;prefs=b.preferences&&typeof b.preferences==='object'?cleanPrefs(b.preferences):prefs;lang=cleanLang(b.language,lang);
       storage.set('g1-hist',hist);storage.set('g1-wrong',wrong);storage.set('g1-bookmarks',bookmarks);storage.set('g1-notes',notes);storage.set('g1-activity',activity);storage.set('g1-sessions',sessions);storage.set('g1-session',session);storage.set('g1-preferences',prefs);storage.set('g1-lang',lang);page='home';render();toast('学习记录已导入。');
     } catch(_) {toast('无法读取这份备份，请选择由 G1 练习导出的 JSON 文件。');}
   }
@@ -330,7 +347,7 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     if(action==='previous')return moveTo(session.i-1);if(action==='next'||action==='skip')return nextQuestion();if(action==='jump')return moveTo(Number(target.dataset.index));if(action==='finish')return finishSession();if(action==='pause'){pauseSession();page='home';render();toast('进度已保存，下次可继续。');return;}
     if(action==='jump-unanswered')return jumpBy(it=>it.pick===null);if(action==='jump-flagged')return jumpBy(it=>it.flagged);
     if(action==='sheet-prev'||action==='sheet-next'){sheetPage+=action==='sheet-next'?1:-1;$('#answer-sheet-content').innerHTML=answerGrid();return;}
-    if(action==='retry-image'){const box=target.closest('.signbox'),img=box?.querySelector('img');if(img){img.hidden=false;box.querySelector('.sign-fallback').hidden=true;const src=img.src;img.src='';img.src=src;img.addEventListener('error',()=>{img.hidden=true;box.querySelector('.sign-fallback').hidden=false;},{once:true});}return;}
+    if(action==='retry-image'){const box=target.closest('.signbox'),img=box?.querySelector('img');if(img){brokenImages.delete(img.dataset.src);img.hidden=false;box.querySelector('.sign-fallback').hidden=true;watchImage(img);img.removeAttribute('src');img.src=img.dataset.src;}return;}
     if(action==='retry-result'){const ids=session.items.filter(it=>it.pick!==byId[it.id].answer_index).map(it=>it.id);return beginSession(ids,'wrong');}
     if(action==='review-prev'||action==='review-next'){reviewPage+=action==='review-next'?1:-1;render();return;}
     if(action==='start-collection')return beginSession(shuffle(collectionIds()),page==='wrong'?'wrong':'bookmarks');if(action==='practice-one')return beginSession([target.dataset.id],page==='wrong'?'wrong':'practice');
@@ -338,7 +355,10 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
     if(action==='theme'){prefs.theme=value;render(true);return;}if(action==='font'){prefs.font=value;render(true);return;}if(action==='language')return setLanguage(value);if(action==='goal'){prefs.goal=Number(value);render(true);return;}
     if(action==='export')return exportRecords();if(action==='import')return $('#import-file').click();if(action==='reset')return resetRecords();
   });
-  view.addEventListener('input',event=>{const el=event.target;if(el.id==='category-search'){categorySearch=el.value;render(true);}else if(el.id==='collection-search'){collectionSearch=el.value;collectionPage=0;render(true);}else if(el.id==='question-note'&&session){const id=session.items[session.i].id;if(el.value.trim())notes[id]=el.value;else delete notes[id];storage.set('g1-notes',notes);}});
+  // 拼音等输入法组字期间不重绘（重绘会打断组字），组字结束后再筛选。
+  view.addEventListener('compositionend',event=>{const el=event.target;if(el.id==='category-search'||el.id==='collection-search')el.dispatchEvent(new Event('input',{bubbles:true}));});
+  view.addEventListener('toggle',event=>{const el=event.target;if(el.dataset?.review)el.open?openReviews.add(el.dataset.review):openReviews.delete(el.dataset.review);else if(el.classList?.contains('notes-box')&&page==='quiz'&&session)notesOpenFor=el.open?session.items[session.i].id:null;},true);
+  view.addEventListener('input',event=>{const el=event.target;if(event.isComposing)return;if(el.id==='category-search'){categorySearch=el.value;render(true);}else if(el.id==='collection-search'){collectionSearch=el.value;collectionPage=0;render(true);}else if(el.id==='question-note'&&session){const id=session.items[session.i].id;if(el.value.trim())notes[id]=el.value;else delete notes[id];storage.set('g1-notes',notes);}});
   view.addEventListener('change',event=>{const el=event.target;if(el.dataset.groupSelect){el.checked?selectedGroups.add(el.dataset.groupSelect):selectedGroups.delete(el.dataset.groupSelect);storage.set('g1-groups',[...selectedGroups]);render(true);}else if(el.id==='practice-difficulty'){practiceDifficulty=el.value;render(true);}else if(el.id==='practice-random'){randomOrder=el.checked;storage.set('g1-random',randomOrder);}else if(el.id==='practice-unmastered'){unmasteredOnly=el.checked;storage.set('g1-unseen',unmasteredOnly);render(true);}else if(el.id==='collection-group'){collectionGroup=el.value;collectionPage=0;render(true);}else if(el.id==='settings-focus'){prefs.focus=el.checked;applyPreferences();}else if(el.id==='settings-goal'){prefs.goal=Math.min(200,Math.max(5,Math.round(Number(el.value)||20)));render(true);}else if(el.id==='import-file'){const file=el.files?.[0];el.value='';importRecords(file);}});
   document.querySelectorAll('#sidebar [data-page]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.page)));
   document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.lang)));
@@ -347,13 +367,25 @@ const META = {"groups":[{"id":"LA","section":"rules","title_zh":"驾照申请与
   $('#focus-toggle')?.addEventListener('click',()=>{prefs.focus=!prefs.focus;applyPreferences();toast(prefs.focus?'答题时将使用专注模式。':'已退出专注模式。');});
   $('#mobile-menu')?.addEventListener('click',()=>{const open=document.body.classList.toggle('sidebar-open');$('#mobile-menu').setAttribute('aria-expanded',String(open));});$('#sidebar-overlay')?.addEventListener('click',closeMobile);
   document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&document.body.classList.contains('sidebar-open')&&!confirmPending){closeMobile();$('#mobile-menu')?.focus();return;}
     if(confirmPending||page!=='quiz'||!session||session.finished||event.ctrlKey||event.metaKey||event.altKey||event.repeat)return;
-    if(event.target.closest('input,textarea,select,[contenteditable="true"],button,a,summary'))return;
+    // 正在输入笔记或搜索时不触发；焦点停在按钮上（比如刚点过选项）时快捷键照常可用。
+    const target=event.target;if(target.closest('input,textarea,select,[contenteditable="true"]'))return;
     const key=event.key.toUpperCase();if(key==='B'&&event.shiftKey){event.preventDefault();toggleBookmark(session.items[session.i].id);return;}
-    const index='1234'.includes(key)?'1234'.indexOf(key):KEYS.indexOf(key);if(index>=0){event.preventDefault();choose(session.items[session.i].order[index]);}else if(event.key==='Enter'){event.preventDefault();nextQuestion();}
+    const index=Math.max(['1','2','3','4'].indexOf(key),KEYS.indexOf(key));if(index>=0){event.preventDefault();choose(session.items[session.i].order[index]);return;}
+    // 焦点在其他按钮、链接上时 Enter 交给它本身；焦点在已选中的选项上时 Enter 进入下一题。
+    if(event.key==='Enter'&&(!target.closest('button,a,summary')||target.closest('.opt[aria-pressed="true"]'))){event.preventDefault();nextQuestion();}
   });
-  window.addEventListener('beforeunload',saveSession);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)saveSession();});
+  window.addEventListener('beforeunload',saveSession);window.addEventListener('pagehide',saveSession);
+  // 页面切到后台（换标签页、手机锁屏）时暂停计时，回来后继续。
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(page==='quiz')pauseSession();else saveSession();}else if(page==='quiz'&&session&&!session.finished&&!session.startedAt)session.startedAt=Date.now();});
+  // 另一个窗口改了学习记录时重新读取，避免这个窗口用旧数据把它覆盖掉。答题中的这一组练习不受影响。
+  window.addEventListener('storage',event=>{
+    if(event.storageArea!==localStorage||(event.key&&!event.key.startsWith('g1-')))return;
+    hist=cleanHist(storage.get('g1-hist',{}));wrong=cleanWrong(storage.get('g1-wrong',{}));bookmarks=cleanBookmarks(storage.get('g1-bookmarks',{}));notes=cleanNotes(storage.get('g1-notes',{}));activity=cleanActivity(storage.get('g1-activity',{}));sessions=cleanSessions(storage.get('g1-sessions',[]));prefs=cleanPrefs(storage.get('g1-preferences',{}));lang=cleanLang(storage.get('g1-lang','both'),lang);
+    if(page==='quiz'||page==='result'){applyPreferences(false);document.querySelectorAll('[data-count="wrong"]').forEach(el=>el.textContent=Object.keys(wrong).length);document.querySelectorAll('[data-count="bookmarks"]').forEach(el=>el.textContent=Object.keys(bookmarks).length);return;}
+    session=validateSession(storage.get('g1-session',null));render(true);
+  });
   setInterval(()=>{if(page==='quiz'&&session&&!session.finished&&session.startedAt){const timer=$('#session-timer');if(timer)timer.textContent=timeLabel(elapsed());}},1000);
   setInterval(()=>{if(page==='quiz')saveSession();},15000);
   if(window.matchMedia){const media=window.matchMedia('(prefers-color-scheme: dark)');media.addEventListener?.('change',()=>{if(prefs.theme==='system')applyPreferences();});}

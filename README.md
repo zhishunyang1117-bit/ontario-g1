@@ -17,6 +17,7 @@
 | `handbook_text/` | 手册各章节的纯文本副本，出题和核对都以它为准 |
 | `tools/build.py` | 改了 `data/questions.json` 后重新生成上面的 md 和 html |
 | `tools/quiz_template.html`、`tools/quiz_styles.css`、`tools/quiz_app.js` | 网页的结构、样式与交互源文件；生成时全部内嵌进一个 HTML |
+| `tests/` | 网页的自动化测试（无头浏览器，不需要联网）和测试用的旧版备份样例 |
 
 ## 怎么用
 
@@ -45,6 +46,12 @@ python D:\ontario-g1\tools\build.py --html-only
 ```
 
 不带 `--html-only` 时，仍按原流程生成全部文档、CSV 和网页。修改界面源文件后需要重新运行生成命令。
+
+## 开发与测试
+
+- `python tools/build.py --check`：检查 `05_模拟练习.html` 是否已按源文件重新生成（不写文件）。
+- `node tests/run.js`：一条命令跑完全部自动化测试。需要 Node 18 以上和 Playwright（Chromium）；测试会拦截所有外网请求，用无头浏览器把首页、分类练习、模拟考试、错题、收藏、笔记、统计、偏好设置、导出导入（含旧版备份）、刷新续练、快捷键和图片兜底都跑一遍。
+- `node tests/screenshots.js`：在桌面、手机和深色模式下给主要页面截图，保存在 `screenshots/`（不提交）。
 
 ## 题目是怎么做出来的
 
