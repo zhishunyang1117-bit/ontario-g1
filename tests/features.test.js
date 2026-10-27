@@ -169,6 +169,13 @@ test('模拟考历史：按交卷时间画趋势图，旧记录没有分部分�
   const labels = await points.evaluateAll(els => els.map(el => [el.className.includes('pass') ? 'pass' : 'fail', el.getAttribute('aria-label')]));
   assert.deepEqual(labels.map(l => l[0]), ['fail', 'pass', 'fail'], '应按交卷时间从早到晚排列');
   assert.match(labels[1][1], /85%.*通过.*标志 18\/20.*交规 16\/20/);
+  // 成绩都不低于 40% 时纵轴从 40 起（70% 的点在一半高度）；有更低的成绩时从 0 起
+  assert.deepEqual(await page.locator('.trend-chart .chart-gridlines em').allInnerTexts(), ['100', '60', '40']);
+  assert.equal(await points.first().evaluate(el => el.style.bottom), '50%');
+  const low = await openApp(browser, { storage: { 'g1-sessions': [{ ...exams[1], correct: 12 }] } });
+  await nav(low.page, 'exam');
+  assert.deepEqual(await low.page.locator('.trend-chart .chart-gridlines em').allInnerTexts(), ['100', '60', '40', '20', '0']);
+  await low.context.close();
   await page.click('.exam-history .chart-table summary');
   const rows = await page.locator('.exam-history tbody tr').allInnerTexts();
   assert.equal(rows.length, 3);

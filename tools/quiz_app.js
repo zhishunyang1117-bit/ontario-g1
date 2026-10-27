@@ -581,12 +581,14 @@
   function trendChart(exams) {
     const list = exams.slice(-20), n = list.length, pass = META.exam.pass_ratio * 100;
     const x = i => n === 1 ? 50 : 3 + i / (n - 1) * 94, pct = s => ratio(s.correct, s.total);
+    // 纵轴从 40% 起，及格线附近的起伏看得更清楚；有低于 40% 的成绩时从 0 起。
+    const lo = list.some(s => pct(s) < 40) ? 0 : 40, y = v => +((v - lo) / (100 - lo) * 100).toFixed(2);
     return `<figure class="chart trend-chart">
       <div class="trend-plot">
-        <div class="chart-gridlines" aria-hidden="true">${[100, 60, 40, 20, 0].map(v => `<span style="bottom:${v}%"><em>${v}</em></span>`).join('')}</div>
-        <div class="trend-pass" style="bottom:${pass}%" aria-hidden="true"><em>及格 ${pass}%</em></div>
-        <svg class="trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><polyline points="${list.map((s, i) => `${x(i).toFixed(2)},${100 - pct(s)}`).join(' ')}"/></svg>
-        <div class="trend-points" role="list" aria-label="最近 ${n} 次模拟考试的正确率">${list.map((s, i) => `<span class="trend-point ${s.passed ? 'pass' : 'fail'} ${x(i) < 18 ? 'edge-left' : x(i) > 82 ? 'edge-right' : ''}" role="listitem" tabindex="0" style="left:${x(i)}%;bottom:${pct(s)}%" aria-label="${esc(shortDate(s.finishedAt))}：正确率 ${pct(s)}%，${s.passed ? '通过' : '未通过'}${s.signs ? `，标志 ${s.signs.c}/${s.signs.n}，交规 ${s.rules.c}/${s.rules.n}` : ''}"><span class="chart-tip" aria-hidden="true"><b>${pct(s)}% · ${s.passed ? '通过' : '未通过'}</b>${esc(shortDate(s.finishedAt))}${s.signs ? ` · 标志 ${partText(s.signs)} · 交规 ${partText(s.rules)}` : ''}</span></span>`).join('')}</div>
+        <div class="chart-gridlines" aria-hidden="true">${[100, 60, 40, 20, 0].filter(v => v >= lo).map(v => `<span style="bottom:${y(v)}%"><em>${v}</em></span>`).join('')}</div>
+        <div class="trend-pass" style="bottom:${y(pass)}%" aria-hidden="true"><em>及格 ${pass}%</em></div>
+        <svg class="trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><polyline points="${list.map((s, i) => `${x(i).toFixed(2)},${100 - y(pct(s))}`).join(' ')}"/></svg>
+        <div class="trend-points" role="list" aria-label="最近 ${n} 次模拟考试的正确率">${list.map((s, i) => `<span class="trend-point ${s.passed ? 'pass' : 'fail'} ${x(i) < 18 ? 'edge-left' : x(i) > 82 ? 'edge-right' : ''}" role="listitem" tabindex="0" style="left:${x(i)}%;bottom:${y(pct(s))}%" aria-label="${esc(shortDate(s.finishedAt))}：正确率 ${pct(s)}%，${s.passed ? '通过' : '未通过'}${s.signs ? `，标志 ${s.signs.c}/${s.signs.n}，交规 ${s.rules.c}/${s.rules.n}` : ''}"><span class="chart-tip" aria-hidden="true"><b>${pct(s)}% · ${s.passed ? '通过' : '未通过'}</b>${esc(shortDate(s.finishedAt))}${s.signs ? ` · 标志 ${partText(s.signs)} · 交规 ${partText(s.rules)}` : ''}</span></span>`).join('')}</div>
       </div>
       <div class="trend-axis" aria-hidden="true"><span>${esc(shortDate(list[0].finishedAt))}</span>${n > 1 ? `<span>${esc(shortDate(list[n - 1].finishedAt))}</span>` : ''}</div>
       <figcaption class="trend-legend"><span><i class="trend-key pass"></i>通过</span><span><i class="trend-key fail"></i>未通过</span><span><i class="trend-key line"></i>及格线 ${pass}%</span><span class="trend-note">最近 ${n} 次</span></figcaption>
